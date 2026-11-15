@@ -923,7 +923,7 @@
       MC.Install.pinCode(MC.Cloud.code);
     });
     MC.Install.show(G.S.name, MC.Cloud.enabled ? MC.Cloud.code : '');
-    MC.Cloud.track('anleitung', MC.Install.env.browser, 'anleitung');
+    MC.Cloud.track('anleitung', null, 'anleitung');
   }
   function gateName() {
     document.body.classList.add('gated');
