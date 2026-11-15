@@ -393,3 +393,7 @@ body.onmoon #hud, body.onmoon #bar, body.onmoon #goal, body.onmoon #flatBtn, bod
 #moon .mit { position: relative; width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,.06); display: grid; place-items: center; color: #6c7790; font-weight: 800; opacity: .45; }
 #moon .mit.have { opacity: 1; background: rgba(180,140,255,.22); color: #efe4ff; } #moon .mit img { width: 32px; height: 32px; }
 #moon .mit em { position: absolute; right: -3px; top: -3px; font-style: normal; font-size: 10px; background: #f2b632; color: #4a3200; border-radius: 6px; padding: 0 3px; }
+
+.mission.upg { display: flex; gap: 12px; align-items: center; text-align: left; }
+.mission.upg img { width: 74px; height: 74px; object-fit: contain; flex: none; }
+.mission.upg p { margin: 2px 0 0; font-size: 13px; color: var(--mute); }

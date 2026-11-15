@@ -646,7 +646,7 @@
     if (cache[id]) return cache[id];
     var ac = MC.Assets && MC.Assets.canvas(id);
     if (ac) {
-      var sz = MC.DEF[id] ? MC.DEF[id].size : 1;
+      var base = MC.DEF[id] || MC.DEF[String(id).replace(/_s\d$/, '')], sz = base ? base.size : 1;
       return (cache[id] = { c: ac, w: ac.lw, h: ac.lh, ox: ac.lw / 2, oy: ac.lh - sz * 32, top: ac.lh - sz * 32, asset: true });
     }
     var d = MC.DEF[id], def = DRAW[id], n = d.size, maxH = def[0];

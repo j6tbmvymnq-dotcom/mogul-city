@@ -111,6 +111,7 @@
   };
 
   function rebuild() {
+    netDirty = true;
     grid = new Int32Array(N * N);
     byId = {};
     var i, j, k;
@@ -158,13 +159,41 @@
   G.friendBonus = function (n) { var f = n === undefined ? (S.friends || 0) : n; return f > 0 ? Math.min(MC.FRIEND_MAX, MC.FRIEND_FIRST + f - 1) : 0; };
   G.count = function (t) { var n = 0; for (var i = 0; i < S.b.length; i++) if (S.b[i].t === t) n++; return n; };
 
-  G.hasRoad = function (b) {
-    var d = MC.DEF[b.t], s = d.size, i;
-    for (i = 0; i < s; i++) {
-      if (G.isRoad(b.x + i, b.y - 1) || G.isRoad(b.x + i, b.y + s) || G.isRoad(b.x - 1, b.y + i) || G.isRoad(b.x + s, b.y + i)) return true;
+  // Straßennetz: Nur das größte zusammenhängende Netz zählt (bei Gleichstand das an der Zentrale).
+  // Abgetrennte Stücke gelten als „nicht angeschlossen“ – Häuser daran bekommen keine Mieter.
+  var netComp = null, netMain = 0, netDirty = true;
+  function netBuild() {
+    netComp = new Int32Array(N * N); netMain = 0; netDirty = false;
+    var id = 0, sizes = [0], i, hq = S.b[0], hqComp = {};
+    for (i = 0; i < S.roads.length; i++) {
+      var st = S.roads[i]; if (netComp[st]) continue;
+      id++; var stack = [st], n = 0; netComp[st] = id;
+      while (stack.length) {
+        var v = stack.pop(), x = v % N, y = (v - x) / N; n++;
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+          var nx = x + d[0], ny = y + d[1];
+          if (nx < 0 || ny < 0 || nx >= N || ny >= N) return;
+          var w = ny * N + nx; if (grid[w] === -1 && !netComp[w]) { netComp[w] = id; stack.push(w); }
+        });
+      }
+      sizes.push(n);
     }
-    return false;
+    if (hq) { var s2 = MC.DEF[hq.t].size; for (i = -1; i <= s2; i++) [[hq.x + i, hq.y - 1], [hq.x + i, hq.y + s2], [hq.x - 1, hq.y + i], [hq.x + s2, hq.y + i]].forEach(function (p) { var c = G.isRoad(p[0], p[1]) ? netComp[p[1] * N + p[0]] : 0; if (c) hqComp[c] = 1; }); }
+    for (i = 1; i < sizes.length; i++) if (!netMain || sizes[i] > sizes[netMain] || (sizes[i] === sizes[netMain] && hqComp[i] && !hqComp[netMain])) netMain = i;
+  }
+  G.isMainRoad = function (x, y) {
+    if (!G.isRoad(x, y)) return false;
+    if (netDirty || !netComp) netBuild();
+    return netComp[y * N + x] === netMain;
   };
+  G.roadParts = function () { if (netDirty || !netComp) netBuild(); var seen = {}; S.roads.forEach(function (r) { seen[netComp[r]] = 1; }); return Object.keys(seen).length; };
+  function touches(b, fn) {
+    var d = MC.DEF[b.t], s = d.size, i;
+    for (i = 0; i < s; i++) if (fn(b.x + i, b.y - 1) || fn(b.x + i, b.y + s) || fn(b.x - 1, b.y + i) || fn(b.x + s, b.y + i)) return true;
+    return false;
+  }
+  G.hasRoad = function (b) { return touches(b, G.isMainRoad); };
+  G.nearRoad = function (b) { return touches(b, G.isRoad); };   // irgendeine Straße daneben (auch abgetrennt)
 
   // Rechteck-Abstand: liegt Gebäude h in der Reichweite r um Gebäude a?
   function inReach(a, da, r, h, dh) {
@@ -262,8 +291,39 @@
   // Vertragskonditionen für ein Haus
   G.offer = function (b, c) {
     var o = MC.offerOf(MC.DEF[b.t], c, G.bonus(b), effect('rent'));
+    var st = G.stage(b);
+    if (st > 1) { o.pay = Math.round(o.pay * MC.UPGRADE.rent[st - 1]); o.n = Math.round(o.n * MC.UPGRADE.cap[st - 1]); }
     o.xp = xpGain(o.xp);
     return o;
+  };
+  // ---------- Häuser ausbauen (gleiche Grundfläche, mehr Bewohner und Miete) ----------
+  G.stage = function (b) { return b.lvlUp || 1; };
+  G.houseName = function (b) { var st = G.stage(b), u = MC.UPGRADES[b.t]; return st > 1 && u ? u[st - 2] : MC.DEF[b.t].name; };
+  G.houseCap = function (b) { return Math.round(MC.DEF[b.t].cap * MC.UPGRADE.cap[G.stage(b) - 1]); };
+  G.upgradeInfo = function (b) {
+    var d = MC.DEF[b.t], u = MC.UPGRADES[b.t], st = G.stage(b);
+    if (d.kind !== 'house' || !u || st >= 3) return null;
+    var nx = st + 1, U = MC.UPGRADE;
+    return { stage: nx, name: u[nx - 2], cost: Math.round(d.cost * U.cost[nx - 1] / 100) * 100, gold: d.gold ? Math.ceil(d.gold * U.cost[nx - 1]) : 0,
+      lvl: Math.max(U.lvl, d.lvl + U.plusLvl[nx - 1]), time: Math.round(d.build * U.time), cap: Math.round(d.cap * U.cap[nx - 1]),
+      rentPct: Math.round((U.rent[nx - 1] / U.rent[st - 1] - 1) * 100) };
+  };
+  G.upgrade = function (b) {
+    var u = G.upgradeInfo(b);
+    if (!u) return 'Dieses Haus lässt sich nicht weiter ausbauen.';
+    if (S.lvl < u.lvl && !S.legacy) return 'Ausbau ab Level ' + u.lvl + '.';
+    if (b.cu && b.cu > G.now()) return 'Das Haus ist noch im Bau.';
+    var st = G.state(b);
+    if (st === 'running' || st === 'ready') return 'Erst den Mietvertrag beenden – im Haus wohnen gerade Mieter.';
+    if (S.cash < u.cost || S.gold < u.gold) return 'Nicht genug Geld.';
+    pay(u.cost, u.gold);
+    if (st === 'expired') delete b.c;
+    b.lvlUp = u.stage; b.upc = (b.upc || 0) + u.cost;
+    var bt = u.time * (1 - effect('build') / 100);
+    b.cs = G.now(); b.cu = G.now() + Math.max(1000, bt);
+    addXp(xpGain(Math.round(u.cost / 300)));
+    dirty(); emit('upgrade', { b: b }); emit('build', { b: b }); G.save();
+    return null;
   };
   function xpGain(x) { return Math.max(1, Math.round(x * (1 + effect('xp') / 100))); }
 
@@ -299,7 +359,7 @@
   G.value = function (d) { return d.cost + (d.gold || 0) * G.goldRate(); };
   G.worth = function () {
     var w = { cash: S.cash, gold: S.gold * G.goldRate(), buildings: 0, land: 0 }, i;
-    for (i = 0; i < S.b.length; i++) w.buildings += G.value(MC.DEF[S.b[i].t]);
+    for (i = 0; i < S.b.length; i++) w.buildings += G.value(MC.DEF[S.b[i].t]) + (S.b[i].upc || 0);
     for (i = 0; i < S.land.length - 1; i++) w.land += MC.LAND[i][0] + MC.LAND[i][1] * G.goldRate();
     w.total = w.cash + w.gold + w.buildings + w.land;
     return w;
@@ -439,10 +499,10 @@
     var i = y * N + x;
     if (on) {
       if (grid[i] !== 0) return false;
-      grid[i] = -1; S.roads.push(i); S.st.roads++;
+      grid[i] = -1; S.roads.push(i); S.st.roads++; netDirty = true;
     } else {
       if (grid[i] !== -1) return false;
-      grid[i] = 0; S.roads.splice(S.roads.indexOf(i), 1);
+      grid[i] = 0; S.roads.splice(S.roads.indexOf(i), 1); netDirty = true;
     }
     emit('road'); G.save();
     return true;

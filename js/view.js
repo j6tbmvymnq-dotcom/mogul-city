@@ -35,7 +35,7 @@
     bindInput();
     G.on(function (type, d) {
       V.kick();
-      if (type === 'build' || type === 'move' || type === 'demolish' || type === 'land' || type === 'reset' || type === 'built' || type === 'visit') itemsDirty = true;
+      if (type === 'build' || type === 'move' || type === 'demolish' || type === 'land' || type === 'reset' || type === 'built' || type === 'visit' || type === 'upgrade') itemsDirty = true;
       statT = 0;
       if (type === 'reset') V.centerHome();
       if (type === 'collect' && d.cash > 0) {
@@ -167,8 +167,16 @@
     var pts = {}, n = 0, moved = false, start = null, pinch = null, painting = null, dragGhost = false, lastPaint = null, brushing = null;
     function pos(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
 
+    // Hängende Finger vermeiden: iOS meldet nicht jedes Loslassen (Systemgesten, App-Wechsel, Benachrichtigungen).
+    // Ein neuer erster Finger beginnt immer eine frische Geste; beim Verlassen der App wird alles zurückgesetzt.
+    function resetTouches() { pts = {}; n = 0; start = null; pinch = null; painting = null; dragGhost = false; brushing = null; }
+    window.addEventListener('blur', resetTouches);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) resetTouches(); });
+    cv.addEventListener('lostpointercapture', function (e) { if (pts[e.pointerId]) { moved = true; up(e); } });   // abgebrochen: kein Antippen auslösen
+    cv.addEventListener('touchend', function (e) { if (e.touches && e.touches.length === 0 && n > 0) setTimeout(function () { if (n > 0 && Object.keys(pts).length) { moved = true; Object.keys(pts).forEach(function (id) { up({ pointerId: id }); }); } }, 60); }, { passive: true });
     cv.addEventListener('pointerdown', function (e) {
       V.kick();
+      if (e.isPrimary) resetTouches();
       try { cv.setPointerCapture(e.pointerId); } catch (x) { }   // darf die Eingabe nie abbrechen
       var p = pos(e); pts[e.pointerId] = p; n = Object.keys(pts).length;
       if (n === 1) {
@@ -338,7 +346,8 @@
     var i, S = G.S;
     for (i = 0; i < S.b.length; i++) {
       var b = S.b[i], d = MC.DEF[b.t];
-      items.push({ b: b, d: d, sp: A.sprite(b.t), sx: wx(b.x, b.y), sy: wy(b.x, b.y), depth: b.x + b.y + d.size });
+      var sid = b.lvlUp > 1 && MC.Assets && MC.Assets.canvas(b.t + '_s' + b.lvlUp) ? b.t + '_s' + b.lvlUp : b.t;
+      items.push({ b: b, d: d, sp: A.sprite(sid), sx: wx(b.x, b.y), sy: wy(b.x, b.y), depth: b.x + b.y + d.size, stars: sid === b.t && b.lvlUp > 1 ? b.lvlUp - 1 : 0 });
     }
     // Wald auf fremdem Land
     if (!treeSp) treeSp = makeTree();
@@ -501,6 +510,16 @@
     }
     g.stroke(); g.setLineDash([]);
 
+    // Beim Bauen: abgehängte Straßenstücke rot markieren (zählen nicht zum Netz)
+    if ((V.mode === 'road' || V.mode === 'place' || V.flat) && G.roadParts() > 1) {
+      for (i = 0; i < roads.length; i++) {
+        x = roads[i] % N; y = (roads[i] - x) / N;
+        if (G.isMainRoad(x, y)) continue;
+        diamond(x + 0.06, y + 0.06, x + 0.94, y + 0.94); g.fillStyle = 'rgba(217,48,37,.38)'; g.fill();
+        g.strokeStyle = 'rgba(217,48,37,.9)'; g.lineWidth = 1.2; g.setLineDash([3, 3]); g.stroke(); g.setLineDash([]);
+      }
+    }
+
     // Tutorial: Zielfelder pulsieren golden
     if (V.tutTiles) {
       var pu = 0.35 + 0.3 * Math.sin(now / 250);
@@ -550,7 +569,12 @@
       g.globalAlpha = 0.85; g.drawImage(gs.c, wx(q.x, q.y) - gs.ox, wy(q.x, q.y) - gs.oy, gs.w, gs.h); g.globalAlpha = 1;
       gDrawn = true;
     }
+    // Nacht: zuerst nur den Boden abdunkeln und Bodenlichter setzen – Gebäude, Fahrzeuge, Laternen kommen danach
+    // in Tiefenreihenfolge (jedes Ding abgedunkelt + sein eigenes Licht), so verdecken vordere Dinge die Lichter dahinter
+    NM = V.flat ? { col: null, light: 0, h: 90 } : V.mood(); V.light = NM.light;
+    if (!V.flat) nightGround(vx0, vx1, vy0, vy1);
     var amb = V.flat || V.dbg.noLife ? [] : lifeStep(now), ai = 0;
+    if (!V.flat) amb = mergeLamps(amb, vx0, vx1, vy0, vy1);
     for (i = 0; i < (V.dbg.noItems ? 0 : items.length); i++) {
       var it = items[i], sp = it.sp;
       if (V.flat) continue;
@@ -559,12 +583,14 @@
       if (it.sx + sp.w < vx0 || it.sx - sp.w > vx1 || it.sy + sp.h < vy0 || it.sy - sp.oy > vy1) continue;
       if (it.b && it.b.id === movingId) { g.globalAlpha = 0.25; g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h); g.globalAlpha = 1; continue; }
       if (it.b && it.st === 'build') { drawSite(it, t); continue; }
-      g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+      drawShadow(it);
+      g.drawImage(tinted(sp.c), it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+      if (it.b && NM.light > 0.02) itemLight(it);
       if (it.d && it.d.friend) flags(it, now);
+      if (it.stars) stars(it);
     }
     while (ai < amb.length) drawAmb(amb[ai++], now, vx0, vx1, vy0, vy1);
     if (!V.flat && !V.dbg.noLife) birds(now, vx0, vx1, vy0, vy1);
-    if (!V.flat) night(now, vx0, vx1, vy0, vy1);
     if (V.flat) drawFlat(t, movingId, q);
     if (q) {
       if (!gDrawn && !V.flat) drawGhost();
@@ -758,75 +784,107 @@
     masks.set(sp.c, m);
     return m;
   }
-  var lastMoodSay = 0;
-  function night(now, vx0, vx1, vy0, vy1) {
-    var md = V.mood();
-    V.light = md.light;
-    if (!md.col) return;
-    // 1) Stimmung: Welt einfärben (multiplizieren)
+  var NM = { col: null, light: 0, h: 90 };   // Stimmung dieses Bildes
+  // abgedunkelte Fassung eines Bildes (Multiplizieren mit der Stimmungsfarbe), je Bild und Farbe zwischengespeichert
+  var tints = new WeakMap();
+  function tinted(c) {
+    if (!NM.col || !c) return c;
+    var e = tints.get(c);
+    if (e && e.col === NM.col) return e.c;
+    var t = (e && e.c) || document.createElement('canvas'); t.width = c.width; t.height = c.height;
+    var q = t.getContext('2d'); q.globalCompositeOperation = 'source-over'; q.clearRect(0, 0, t.width, t.height);
+    q.drawImage(c, 0, 0); q.globalCompositeOperation = 'multiply'; q.fillStyle = NM.col; q.fillRect(0, 0, t.width, t.height);
+    q.globalCompositeOperation = 'destination-in'; q.drawImage(c, 0, 0); q.globalCompositeOperation = 'source-over';
+    tints.set(c, { col: NM.col, c: t });
+    return t;
+  }
+  function tintHex(hex) {   // Farbe für gezeichnete Dinge (Autos, Personen) passend abdunkeln
+    if (!NM.col) return hex;
+    var a = hex.charAt(0) === '#' ? [parseInt(hex.substr(1, 2), 16), parseInt(hex.substr(3, 2), 16), parseInt(hex.substr(5, 2), 16)] : [200, 200, 200];
+    var m = /rgb\((\d+),(\d+),(\d+)\)/.exec(NM.col), b = m ? [+m[1], +m[2], +m[3]] : [255, 255, 255];
+    return 'rgb(' + a.map(function (v, i) { return Math.round(v * b[i] / 255); }).join(',') + ')';
+  }
+  // Schatten-Ebene (Fable: schatten_<id>) – Stärke nach Sonnenstand
+  function shadowAlpha() { return 0.3 * Math.max(0.12, Math.min(1, (NM.h + 4) / 14)); }
+  function drawShadow(it) {
+    if (!it.b) return;
+    var sh = A.img('schatten_' + spriteId(it)); if (!sh) return;
+    g.globalAlpha = shadowAlpha(); g.drawImage(sh, it.sx - it.sp.ox, it.sy - it.sp.oy, it.sp.w, it.sp.h); g.globalAlpha = 1;
+  }
+  function spriteId(it) { return it.b && it.b.lvlUp > 1 && !it.stars ? it.b.t + '_s' + it.b.lvlUp : it.b ? it.b.t : ''; }
+  // Boden: Welt einfärben (nur das, was schon gezeichnet ist: Gelände, Straßen, Boote) + Bodenlichter
+  function nightGround(vx0, vx1, vy0, vy1) {
+    if (!NM.col) return;
     g.save();
-    g.globalCompositeOperation = 'multiply'; g.fillStyle = md.col;
+    g.globalCompositeOperation = 'multiply'; g.fillStyle = NM.col;
     g.fillRect(vx0 - 20, vy0 - 20, vx1 - vx0 + 40, vy1 - vy0 + 40);
-    var L = md.light;
+    var L = NM.light, i;
     if (L > 0.02) {
       g.globalCompositeOperation = 'lighter';
-      var S = G.S, t = G.now(), i;
-      // 2) Laternen an den Straßen (Lichtkegel auf dem Boden + helle Lampe)
-      for (i = 0; i < S.roads.length; i++) {
-        var x = S.roads[i] % N, y = (S.roads[i] - x) / N;
-        if (((x * 7 + y * 3) % 4) !== 0) continue;
-        var lx = wx(x + 0.5, y + 0.5), ly = wy(x + 0.5, y + 0.5);
-        if (lx < vx0 - 60 || lx > vx1 + 60 || ly < vy0 - 60 || ly > vy1 + 60) continue;
+      lampList().forEach(function (lp) {   // Lichtkegel der Laternen auf der Straße
+        var lx = wx(lp.gx, lp.gy), ly = wy(lp.gx, lp.gy);
+        if (lx < vx0 - 60 || lx > vx1 + 60 || ly < vy0 - 60 || ly > vy1 + 60) return;
         var gr = g.createRadialGradient(lx, ly, 2, lx, ly, 34);
         gr.addColorStop(0, 'rgba(255,200,110,' + (0.30 * L) + ')'); gr.addColorStop(1, 'rgba(255,200,110,0)');
         g.fillStyle = gr; g.beginPath(); g.ellipse(lx, ly, 34, 19, 0, 0, Math.PI * 2); g.fill();
-      }
-      // 3) Gebäude: Fenster (bewohnt/geöffnet) und warmer Schein vor Läden
-      for (i = 0; i < items.length; i++) {
+      });
+      for (i = 0; i < items.length; i++) {   // warmer Schein vor geöffneten Läden (auf dem Boden)
         var it = items[i];
-        if (!it.b || it.st === 'build') continue;
-        var sp = it.sp, k = it.d.kind;
-        if (it.sx + sp.w < vx0 || it.sx - sp.w > vx1 || it.sy + sp.h < vy0 || it.sy - sp.oy > vy1) continue;
-        var on = k === 'hq' || k === 'wonder' ? 0.9 : k === 'shop' ? (G.customers(it.b) > 0 ? 1 : 0.35) : k === 'house' ? (it.st === 'running' || it.st === 'ready' ? 1 : 0.12) : 0;
-        if (!on) continue;
-        var m = windowMask(sp, it.b.id * 2654435761);
-        if (m) { g.globalAlpha = Math.min(1, L * on * 0.78); g.drawImage(m, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h); g.globalAlpha = 1; }
-        if (k === 'shop' && on === 1) {
-          var s2 = it.d.size, cx = wx(it.b.x + s2 / 2, it.b.y + s2 / 2), cy = wy(it.b.x + s2 / 2, it.b.y + s2 / 2) + s2 * 6;
-          var sg = g.createRadialGradient(cx, cy, 4, cx, cy, s2 * 30);
-          sg.addColorStop(0, 'rgba(255,180,90,' + (0.32 * L) + ')'); sg.addColorStop(1, 'rgba(255,180,90,0)');
-          g.fillStyle = sg; g.beginPath(); g.ellipse(cx, cy, s2 * 30, s2 * 17, 0, 0, Math.PI * 2); g.fill();
-        }
-      }
-      // 4) Autos: Scheinwerferkegel vorne, Rücklichter hinten; Boote: Positionslicht
-      for (i = 0; i < life.cars.length; i++) {
-        var c = life.cars[i]; if (c.fx === undefined) continue;
-        var dx = DIRS[c.dir][0], dy = DIRS[c.dir][1];
-        var fx = wx(c.fx + dx * 0.2, c.fy + dy * 0.2), fy = wy(c.fx + dx * 0.2, c.fy + dy * 0.2) - 3;
-        var ex = wx(c.fx + dx * 0.75, c.fy + dy * 0.75), ey = wy(c.fx + dx * 0.75, c.fy + dy * 0.75);
-        if (fx < vx0 - 40 || fx > vx1 + 40 || fy < vy0 - 40 || fy > vy1 + 40) continue;
-        var mx = (fx + ex) / 2, my = (fy + ey + 3) / 2;
-        var hg = g.createRadialGradient(mx, my, 1, mx, my, 15);
-        hg.addColorStop(0, 'rgba(255,240,190,' + (0.26 * L) + ')'); hg.addColorStop(1, 'rgba(255,240,190,0)');
-        g.fillStyle = hg; g.beginPath(); g.ellipse(mx, my, 15, 9, 0, 0, Math.PI * 2); g.fill();
-        g.fillStyle = 'rgba(255,250,220,' + (0.9 * L) + ')'; g.beginPath(); g.arc(fx, fy, 1.3, 0, Math.PI * 2); g.fill();
-        var bx2 = wx(c.fx - dx * 0.21, c.fy - dy * 0.21), by2 = wy(c.fx - dx * 0.21, c.fy - dy * 0.21) - 3;
-        g.fillStyle = 'rgba(255,60,40,' + (0.9 * L) + ')'; g.beginPath(); g.arc(bx2, by2, 1.4, 0, Math.PI * 2); g.fill();
-      }
-      g.globalCompositeOperation = 'source-over';
-      // Laternenköpfe als kleine helle Punkte (über allem, nicht addiert, damit sie nicht ausfressen)
-      g.fillStyle = 'rgba(255,236,180,' + (0.85 * L) + ')';
-      for (i = 0; i < S.roads.length; i++) {
-        var x2 = S.roads[i] % N, y2 = (S.roads[i] - x2) / N;
-        if (((x2 * 7 + y2 * 3) % 4) !== 0) continue;
-        var px = wx(x2 + 0.92, y2 + 0.5), py = wy(x2 + 0.92, y2 + 0.5);
-        if (px < vx0 - 20 || px > vx1 + 20 || py < vy0 - 20 || py > vy1 + 20) continue;
-        g.strokeStyle = 'rgba(40,45,60,.7)'; g.lineWidth = 1; g.beginPath(); g.moveTo(px, py); g.lineTo(px, py - 13); g.stroke();
-        g.beginPath(); g.arc(px, py - 14, 1.8, 0, Math.PI * 2); g.fill();
+        if (!it.b || it.d.kind !== 'shop' || it.st === 'build' || G.customers(it.b) <= 0) continue;
+        var s2 = it.d.size, cx = wx(it.b.x + s2 / 2, it.b.y + s2 / 2), cy = wy(it.b.x + s2 / 2, it.b.y + s2 / 2) + s2 * 6;
+        if (cx < vx0 - 100 || cx > vx1 + 100 || cy < vy0 - 100 || cy > vy1 + 100) continue;
+        var sg = g.createRadialGradient(cx, cy, 4, cx, cy, s2 * 30);
+        sg.addColorStop(0, 'rgba(255,180,90,' + (0.32 * L) + ')'); sg.addColorStop(1, 'rgba(255,180,90,0)');
+        g.fillStyle = sg; g.beginPath(); g.ellipse(cx, cy, s2 * 30, s2 * 17, 0, 0, Math.PI * 2); g.fill();
       }
     }
     g.restore();
   }
+  // Fensterlicht eines Gebäudes direkt nach dem Gebäude (spätere, vordere Gebäude verdecken es)
+  function itemLight(it) {
+    var k = it.d.kind, on = k === 'hq' || k === 'wonder' ? 0.9 : k === 'shop' ? (G.customers(it.b) > 0 ? 1 : 0.35) : k === 'house' ? (it.st === 'running' || it.st === 'ready' ? 1 : 0.12) : 0;
+    if (!on) return;
+    var sp = it.sp, m = A.img('licht_' + spriteId(it)) || windowMask(sp, it.b.id * 2654435761);
+    if (!m) return;
+    g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = Math.min(1, NM.light * on * 0.85);
+    g.drawImage(m, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+    g.restore();
+  }
+  // Laternen: am Straßenrand (Seite ohne Nachbarstraße), nicht auf Kreuzungen; als Objekte in der Tiefenreihenfolge
+  var lampCache = { sig: '', list: [] };
+  function lampList() {
+    var S = G.S, sig = S.roads.length + ':' + (S.roads[0] || 0) + ':' + (S.roads[S.roads.length - 1] || 0);
+    if (sig === lampCache.sig) return lampCache.list;
+    var out = [];
+    S.roads.forEach(function (id) {
+      var x = id % N, y = (id - x) / N;
+      if (((x * 7 + y * 3) % 4) !== 0) return;
+      var side = !G.isRoad(x, y + 1) ? [0.5, 0.96, 0.5, 0.7] : !G.isRoad(x + 1, y) ? [0.96, 0.5, 0.7, 0.5] : !G.isRoad(x, y - 1) ? [0.5, 0.04, 0.5, 0.3] : !G.isRoad(x - 1, y) ? [0.04, 0.5, 0.3, 0.5] : null;
+      if (!side) return;
+      out.push({ lamp: 1, fx: x + side[0], fy: y + side[1], gx: x + side[2], gy: y + side[3] });
+    });
+    lampCache = { sig: sig, list: out };
+    return out;
+  }
+  function mergeLamps(amb, vx0, vx1, vy0, vy1) {
+    var showDay = !!A.img('laterne');
+    if (!showDay && NM.light < 0.02) return amb;
+    var ls = lampList().map(function (o) { return { o: o, d: o.fx + o.fy }; });
+    return amb.concat(ls).sort(function (a, b) { return a.d - b.d; });
+  }
+  function drawLamp(o) {
+    var px = wx(o.fx, o.fy), py = wy(o.fx, o.fy), im = A.img('laterne'), L = NM.light;
+    if (im) g.drawImage(tinted(im), px - im.lw / 2, py - im.lh, im.lw, im.lh);
+    else if (L > 0.02) { g.strokeStyle = 'rgba(40,45,60,.75)'; g.lineWidth = 1; g.beginPath(); g.moveTo(px, py); g.lineTo(px, py - 13); g.stroke(); }
+    if (L > 0.02) {
+      var hy = py - (im ? im.lh * 0.9 : 14), gl = A.img('laterne_licht');
+      g.save(); g.globalCompositeOperation = 'lighter';
+      if (gl) { g.globalAlpha = L; g.drawImage(gl, px - gl.lw / 2, hy - gl.lh / 2, gl.lw, gl.lh); }
+      else { g.fillStyle = 'rgba(255,236,180,' + (0.85 * L) + ')'; g.beginPath(); g.arc(px, hy, 1.8, 0, Math.PI * 2); g.fill(); }
+      g.restore();
+    }
+  }
+
 
   // ---------- Leben in der Stadt: Autos, Fußgänger, Boote, Vögel ----------
   // Autos folgen dem Straßennetz (Rechtsverkehr, an Kreuzungen zufällig abbiegen, keine Kehrtwende außer in Sackgassen).
@@ -857,8 +915,8 @@
     var wantCars = Math.min(140, Math.floor(roads / 6) + (tenants > 0 ? 1 : 0)), wantPeds = Math.min(140, Math.floor(tenants / 5) + (tenants > 0 ? 1 : 0));
     var sig = S.roads.length + ':' + (G.visiting ? 'v' : 'o');
     if (sig !== life.sig) { life.sig = sig; life.cars = life.cars.filter(function (c) { return G.isRoad(c.x, c.y); }); life.peds = life.peds.filter(function (c) { return G.isRoad(c.x, c.y); }); }
-    while (life.cars.length < wantCars) spawnOn(life.cars, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.9 + Math.random() * 0.6, col: CARCOL[Math.floor(Math.random() * CARCOL.length)], car: 1 }; });
-    while (life.peds.length < wantPeds) spawnOn(life.peds, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.22 + Math.random() * 0.12, col: SHIRT[Math.floor(Math.random() * SHIRT.length)], side: Math.random() < 0.5 ? 1 : -1, ph: Math.random() * 6 }; });
+    while (life.cars.length < wantCars) spawnOn(life.cars, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.9 + Math.random() * 0.6, col: CARCOL[Math.floor(Math.random() * CARCOL.length)], car: 1, type: MC.CARS[Math.floor(Math.random() * MC.CARS.length)] }; });
+    while (life.peds.length < wantPeds) spawnOn(life.peds, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.22 + Math.random() * 0.12, col: SHIRT[Math.floor(Math.random() * SHIRT.length)], side: Math.random() < 0.5 ? 1 : -1, ph: Math.random() * 6, pid: 1 + Math.floor(Math.random() * MC.PEOPLE) }; });
     life.cars.length = Math.min(life.cars.length, wantCars); life.peds.length = Math.min(life.peds.length, wantPeds);
     life.on = life.cars.length + life.peds.length > 0;
     var out = [];
@@ -890,24 +948,51 @@
     quad(P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1), shade(col, 0.62));
     quad(P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1), col);
   }
+  // Richtung -> Grafik: O (rechts unten) = vorn, S (links unten) = vorn gespiegelt, N (rechts oben) = hinten, W (links oben) = hinten gespiegelt
+  function dirSprite(prefix, dir) { var back = dir === 0 || dir === 3, flip = dir === 2 || dir === 3; return { im: A.img(prefix + (back ? '_hinten' : '_vorn')), flip: flip }; }
+  function blit(im, x, y, flip, bottomOff) {
+    var w = im.lw, h = im.lh, c = tinted(im);
+    if (flip) { g.save(); g.translate(x, 0); g.scale(-1, 1); g.drawImage(c, -w / 2, y - h + (bottomOff || 0), w, h); g.restore(); }
+    else g.drawImage(c, x - w / 2, y - h + (bottomOff || 0), w, h);
+  }
+  function carLights(o) {
+    var L = NM.light; if (L < 0.02) return;
+    var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1];
+    var fx = wx(o.fx + dx * 0.2, o.fy + dy * 0.2), fy = wy(o.fx + dx * 0.2, o.fy + dy * 0.2) - 3;
+    var ex = wx(o.fx + dx * 0.75, o.fy + dy * 0.75), ey = wy(o.fx + dx * 0.75, o.fy + dy * 0.75);
+    g.save(); g.globalCompositeOperation = 'lighter';
+    var mx = (fx + ex) / 2, my = (fy + ey + 3) / 2, hg = g.createRadialGradient(mx, my, 1, mx, my, 15);
+    hg.addColorStop(0, 'rgba(255,240,190,' + (0.26 * L) + ')'); hg.addColorStop(1, 'rgba(255,240,190,0)');
+    g.fillStyle = hg; g.beginPath(); g.ellipse(mx, my, 15, 9, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,250,220,' + (0.9 * L) + ')'; g.beginPath(); g.arc(fx, fy, 1.3, 0, Math.PI * 2); g.fill();
+    var bx2 = wx(o.fx - dx * 0.21, o.fy - dy * 0.21), by2 = wy(o.fx - dx * 0.21, o.fy - dy * 0.21) - 3;
+    g.fillStyle = 'rgba(255,60,40,' + (0.9 * L) + ')'; g.beginPath(); g.arc(bx2, by2, 1.4, 0, Math.PI * 2); g.fill();
+    g.restore();
+  }
   function drawAmb(a, now, vx0, vx1, vy0, vy1) {
     var o = a.o, sx = wx(o.fx, o.fy), sy = wy(o.fx, o.fy);
-    if (sx < vx0 - 20 || sx > vx1 + 20 || sy < vy0 - 20 || sy > vy1 + 20) return;
+    if (sx < vx0 - 30 || sx > vx1 + 30 || sy < vy0 - 30 || sy > vy1 + 60) return;
+    if (o.lamp) return drawLamp(o);
     if (o.car) {
+      var cs0 = dirSprite('auto_' + o.type, o.dir);
+      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 4); carLights(o); return; }
       var along = o.dir % 2 === 1, L = 0.21, W = 0.11, x0, x1, y0, y1;   // halbe Länge/Breite in Feldern
       if (along) { x0 = o.fx - L; x1 = o.fx + L; y0 = o.fy - W; y1 = o.fy + W; } else { x0 = o.fx - W; x1 = o.fx + W; y0 = o.fy - L; y1 = o.fy + L; }
       g.beginPath(); g.ellipse(sx, sy + 1, 9, 4.5, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.18)'; g.fill();
-      box(x0, y0, x1, y1, 1.5, 6, o.col);
+      box(x0, y0, x1, y1, 1.5, 6, tintHex(o.col));
       // Kabine leicht nach hinten versetzt, Scheiben dunkel
       var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1], cs = 0.6;
       var cx0 = o.fx - (o.fx - x0) * cs - dx * 0.03, cx1 = o.fx + (x1 - o.fx) * cs - dx * 0.03, cy0 = o.fy - (o.fy - y0) * cs - dy * 0.03, cy1 = o.fy + (y1 - o.fy) * cs - dy * 0.03;
-      box(cx0, cy0, cx1, cy1, 6, 9.5, '#2d4a6e');
-      quad(P(cx0, cy0, 9.5), P(cx1, cy0, 9.5), P(cx1, cy1, 9.5), P(cx0, cy1, 9.5), o.col);
+      box(cx0, cy0, cx1, cy1, 6, 9.5, tintHex('#2d4a6e'));
+      quad(P(cx0, cy0, 9.5), P(cx1, cy0, 9.5), P(cx1, cy1, 9.5), P(cx0, cy1, 9.5), tintHex(o.col));
+      carLights(o);
     } else {
+      var pim = A.img('person_' + o.pid + '_' + (Math.floor(now / 220 + o.ph) % 2 + 1));
+      if (pim) { blit(pim, sx, sy, o.dir === 2 || o.dir === 3, 0); return; }
       var bob = Math.abs(Math.sin(now / 160 + o.ph)) * 1.2, step = Math.sin(now / 160 + o.ph) * 1.1;
       g.beginPath(); g.ellipse(sx, sy, 2.6, 1.3, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.2)'; g.fill();
       g.strokeStyle = '#3a3f4a'; g.lineWidth = 1.1; g.beginPath(); g.moveTo(sx - 0.7, sy - 3.5); g.lineTo(sx - 0.7 + step * 0.6, sy); g.moveTo(sx + 0.7, sy - 3.5); g.lineTo(sx + 0.7 - step * 0.6, sy); g.stroke();
-      g.fillStyle = o.col; g.fillRect(sx - 1.6, sy - 7.6 - bob, 3.2, 4.4);
+      g.fillStyle = tintHex(o.col); g.fillRect(sx - 1.6, sy - 7.6 - bob, 3.2, 4.4);
       g.beginPath(); g.arc(sx, sy - 9.2 - bob, 1.5, 0, Math.PI * 2); g.fillStyle = '#f0c8a0'; g.fill();
     }
   }
@@ -933,14 +1018,32 @@
   // Vogelschwarm: ab und zu ein paar „V“ quer über den sichtbaren Ausschnitt
   var flock = null;
   function birds(now, vx0, vx1, vy0, vy1) {
-    if (!flock) { if (Math.random() < 0.0015) flock = { t0: now, y: vy0 + (vy1 - vy0) * (0.15 + Math.random() * 0.4), dir: Math.random() < 0.5 ? 1 : -1, n: 3 + Math.floor(Math.random() * 4) }; return; }
-    var span = vx1 - vx0, k = (now - flock.t0) / 14000;
-    if (k > 1) { flock = null; return; }
-    var bx = flock.dir > 0 ? vx0 - 40 + (span + 80) * k : vx1 + 40 - (span + 80) * k, z = 1 / Math.max(0.5, cam.z);
-    g.strokeStyle = 'rgba(30,40,55,.75)'; g.lineWidth = 1.3 * z; g.lineCap = 'round';
+    if (!flock) {
+      if (Math.random() < 0.0015) { var dir = Math.random() < 0.5 ? 1 : -1; flock = { t0: now, x0: dir > 0 ? vx0 - 60 : vx1 + 60, y: vy0 + (vy1 - vy0) * (0.15 + Math.random() * 0.4), dir: dir, n: 3 + Math.floor(Math.random() * 4) }; }
+      return;
+    }
+    var age = (now - flock.t0) / 1000, bx = flock.x0 + flock.dir * age * 45;   // 45 Welt-Pixel je Sekunde
+    if (age > 40) { flock = null; return; }
+    var im1 = A.img('vogel_1'), im2 = A.img('vogel_2');
+    g.strokeStyle = 'rgba(30,40,55,.75)'; g.lineWidth = 1.3; g.lineCap = 'round';
     for (var i = 0; i < flock.n; i++) {
-      var x = bx - flock.dir * i * 14 * z, y = flock.y + (i % 2 ? 7 : -3) * z + Math.sin(now / 300 + i) * 2 * z, w = Math.sin(now / 120 + i) * 2.2 * z;
-      g.beginPath(); g.moveTo(x - 5 * z, y - w); g.quadraticCurveTo(x - 2 * z, y - 1.5 * z, x, y); g.quadraticCurveTo(x + 2 * z, y - 1.5 * z, x + 5 * z, y - w); g.stroke();
+      var x = bx - flock.dir * i * 14, y = flock.y + (i % 2 ? 7 : -3) + Math.sin(now / 300 + i) * 2;
+      if (x < vx0 - 30 || x > vx1 + 30 || y < vy0 - 30 || y > vy1 + 30) continue;
+      if (im1 && im2) { var im = Math.floor(now / 180 + i) % 2 ? im1 : im2; blit(im, x, y + im.lh / 2, flock.dir < 0, 0); continue; }
+      var w = Math.sin(now / 120 + i) * 2.2;
+      g.beginPath(); g.moveTo(x - 5, y - w); g.quadraticCurveTo(x - 2, y - 1.5, x, y); g.quadraticCurveTo(x + 2, y - 1.5, x + 5, y - w); g.stroke();
+    }
+  }
+
+
+  // Ausbaustufe ohne eigene Grafik (noch nicht von Fable): kleine Sterne über dem Haus
+  function stars(it) {
+    var x = it.sx, y = it.sy - Math.min(it.sp.top, 120) + 6;
+    for (var i = 0; i < it.stars; i++) {
+      var cx = x + (i - (it.stars - 1) / 2) * 11;
+      g.beginPath();
+      for (var k = 0; k < 10; k++) { var r = k % 2 ? 2.4 : 5.5, a = -Math.PI / 2 + k * Math.PI / 5; g.lineTo(cx + Math.cos(a) * r, y + Math.sin(a) * r); }
+      g.closePath(); g.fillStyle = '#f2b632'; g.fill(); g.strokeStyle = 'rgba(90,60,0,.7)'; g.lineWidth = 1; g.stroke();
     }
   }
 
@@ -949,13 +1052,13 @@
     var pr = Math.max(0, Math.min(1, (t - b.cs) / Math.max(1, b.cu - b.cs)));
     diamond(b.x + 0.04, b.y + 0.04, b.x + n - 0.04, b.y + n - 0.04);
     g.fillStyle = '#c9a871'; g.fill(); g.strokeStyle = '#f2b632'; g.lineWidth = 2; g.setLineDash([5, 4]); g.stroke(); g.setLineDash([]);
-    var sp = it.sp;
+    var sp = it.sp, spc = tinted(sp.c);
     // Gebäude wächst von unten nach oben aus dem Gerüst
     var cut = (sp.h - n * 2 * HH) * (1 - pr);
-    g.globalAlpha = 0.28; g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+    g.globalAlpha = 0.28; g.drawImage(spc, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
     g.globalAlpha = 0.95;
     var kx = sp.c.width / sp.w, ky = sp.c.height / sp.h;
-    g.drawImage(sp.c, 0, cut * ky, sp.w * kx, (sp.h - cut) * ky, it.sx - sp.ox, it.sy - sp.oy + cut, sp.w, sp.h - cut);
+    g.drawImage(spc, 0, cut * ky, sp.w * kx, (sp.h - cut) * ky, it.sx - sp.ox, it.sy - sp.oy + cut, sp.w, sp.h - cut);
     g.globalAlpha = 1;
     // Baugerüst (assets/sprites/baustelle_<größe>.svg), gleiche Regel wie Gebäude
     var sc = A.img('baustelle_' + n);

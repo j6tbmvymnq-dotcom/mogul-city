@@ -384,6 +384,17 @@
     return h;
   }
 
+  function upgradeBox(b) {
+    var u = G.upgradeInfo(b), S = G.S;
+    if (!u || (S.lvl < MC.UPGRADE.lvl && !S.legacy)) return '';
+    if (S.lvl >= u.lvl) tip('tipp_ausbau', 900);
+    var st = G.state(b), busy = st === 'running' || st === 'ready', locked = S.lvl < u.lvl && !S.legacy, poor = S.cash < u.cost || S.gold < u.gold;
+    var img = MC.Assets.url(b.t + '_s' + u.stage);
+    return '<h4>Ausbauen</h4><div class="mission upg">' + (img ? '<img src="' + img + '" alt="">' : '') + '<div><h3>' + esc(u.name) + '</h3>' +
+      '<p>Stufe ' + u.stage + ' · ' + u.cap + ' statt ' + G.houseCap(b) + ' Wohnplätze · +' + u.rentPct + ' % Miete · Bauzeit ' + MC.durShort(u.time) + '</p>' +
+      (locked ? '<div class="sub">Ab Level ' + u.lvl + '</div>' : busy ? '<div class="sub">Geht, sobald der Mietvertrag beendet ist (Miete kassieren).</div>' : '') + '</div></div>' +
+      '<div class="row"><button class="btn primary' + (locked || busy || poor ? ' off' : '') + '" style="width:100%" data-do="upgrade">Ausbauen · ' + MC.money(u.cost) + (u.gold ? ' + ' + u.gold + ' ' + GOLD : '') + '</button></div>';
+  }
   function buildingSig(b) { return b.id + ':' + G.state(b) + ':' + (b.c ? b.c.k : '') + ':' + G.S.lvl; }
   function openBuilding(b) {
     var d = MC.DEF[b.t], st = G.state(b), h = '', chips = [chip(KIND[d.kind])];
@@ -399,7 +410,8 @@
         (footer(b, d) ? '<h4>Sonstiges</h4>' + footer(b, d) : '');
     } else if (d.kind === 'house') {
       var bonus = G.bonus(b);
-      chips.push(chip(d.cap + ' Wohnplätze'));
+      if (G.stage(b) > 1) chips.push(chip('Stufe ' + G.stage(b), 'y'));
+      chips.push(chip(G.houseCap(b) + ' Wohnplätze'));
       chips.push(chip('Deko-Bonus +' + bonus + ' %', bonus ? 'g' : ''));
       h = hero(d, chips);
       if (st === 'noroad') h += '<div class="note">Kein Straßenanschluss. Baue eine Straße direkt an das Haus – erst dann ziehen Mieter ein.</div>';
@@ -441,7 +453,8 @@
     } else {
       h = hqHtml();
     }
-    openSheet(d.kind === 'hq' ? (G.S.name || 'Meine Stadt') : d.name, h, { type: 'b', id: b.id, sig: buildingSig(b) });
+    if (d.kind === 'house' && st !== 'build' && !G.visiting) h += upgradeBox(b);
+    openSheet(d.kind === 'hq' ? (G.S.name || 'Meine Stadt') : d.kind === 'house' ? G.houseName(b) : d.name, h, { type: 'b', id: b.id, sig: buildingSig(b) });
     timers();
   }
   UI.openBuilding = openBuilding;
@@ -928,6 +941,11 @@
     }
     if (v === 'ranking') { MC.Cloud.track('bestenliste'); return openRanking(); }
     if (v === 'brush') { brushNext = !brushNext; if (brushNext) applyAll = false; return b && openBuilding(b); }
+    if (v === 'upgrade' && b) {
+      var ue = G.upgrade(b);
+      if (ue) { UI.toast(ue, true); if (/Geld/.test(ue)) UI.say('kein_geld', null, 120000); return; }
+      UI.sound('build'); UI.toast(G.houseName(b) + ' wird gebaut!'); closeSheet(true); hud(); return;
+    }
     if (v === 'invite') return openInvite();
     if (v === 'moon') { closeSheet(true); return MC.Moon.open(); }
     if (v === 'sendinvite') return sendInvite();
@@ -1111,6 +1129,7 @@
     if (type === 'built' && MC.DEF[d.b.t].kind === 'shop') setTimeout(function () { tip('tipp_gewerbe'); }, 1500);
     if (type === 'build') { var bd = MC.DEF[d.b.t]; if ((bd.kind === 'house' || bd.kind === 'shop') && !G.touchesRoad(bd, d.b.x, d.b.y)) setTimeout(function () { tip('tipp_strasse'); }, 600); }
     if (type === 'found') setTimeout(function () { tip('tipp_sammeln'); }, 1200);
+    if ((type === 'road' || type === 'build') && !G.visiting && G.S.b.some(function (x) { var dk = MC.DEF[x.t].kind; return (dk === 'house' || dk === 'shop') && !x.cu && G.nearRoad(x) && !G.hasRoad(x); })) setTimeout(function () { tip('tipp_netz'); }, 700);
     if (type === 'built' && d.b.t === 'w_rakete') setTimeout(moonIntro, 1800);
     if (type === 'build' && d.b.cu && d.b.cu - G.now() >= 10 * MC.MIN) setTimeout(function () { tip('tipp_sofort'); }, 1500);
     if ((type === 'collect' || type === 'expire' || type === 'built') && G.unlocked('lease') && !G.S.seen.tip_tipp_pinsel) {
@@ -1135,7 +1154,7 @@
     }
     if (type === 'tutorial') { UI.hud(); setTimeout(UI.runPendingIntros, 2500); }
     if (type === 'levelup') levelUp(d);
-    else if (type === 'built') { UI.toast(MC.DEF[d.b.t].name + ' ist fertig!'); UI.sound('built'); }
+    else if (type === 'built') { UI.toast((MC.DEF[d.b.t].kind === 'house' ? G.houseName(d.b) : MC.DEF[d.b.t].name) + ' ist fertig!'); UI.sound('built'); }
     else if (type === 'found') {
       var u = AS.url('samm_' + d.f.set + '_' + (d.f.i + 1));
       UI.toast('Sammelstück gefunden: ' + d.f.name + ' (' + d.f.setName + ')', false, u);

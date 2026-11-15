@@ -152,6 +152,29 @@
   ];
 
   /* Freischaltungen: Funktion -> ab Level (Plan: docs/TUTORIAL-PLAN.md). Gesperrtes wird ausgeblendet. */
+  // Häuser ausbauen: gleiche Grundfläche, mehr Bewohner und Miete. Stufe 2 und 3 je Haus (Grafiken <id>_s2 / <id>_s3 von Fable)
+  MC.UPGRADE = { lvl: 8, cap: [1, 1.5, 2], rent: [1, 1.4, 1.85], cost: [0, 0.6, 0.9], time: 0.5, plusLvl: [0, 3, 8] };
+  MC.UPGRADES = {
+    bungalow: ['Bungalow mit Einliegerwohnung', 'Doppelhaus'],
+    reihenhaus: ['Reihenhaus mit Dachausbau', 'Reihenhaus-Zeile'],
+    luxreihenhaus: ['Stadtvilla-Reihe', 'Luxus-Reihe mit Dachterrasse'],
+    landhaus: ['Landhaus mit Anbau', 'Gutshof'],
+    wohnblock: ['Wohnblock aufgestockt', 'Wohnhochhaus'],
+    kolonial: ['Kolonialhaus mit Seitenflügel', 'Kolonial-Residenz'],
+    penthouse: ['Penthouse-Turm Plus', 'Doppelturm'],
+    luxusapart: ['Apartments mit Sky-Lounge', 'Apartment-Komplex'],
+    villa: ['Villa mit Gästehaus', 'Villen-Anwesen'],
+    luxvilla: ['Luxus-Villa mit Poolhaus', 'Promi-Anwesen'],
+    wolkenkratzer: ['Wolkenkratzer aufgestockt', 'Zwillingstürme'],
+    chateau: ['Château mit Orangerie', 'Château-Domäne'],
+    supertower: ['Super-Tower Plus', 'Mega-Tower'],
+    schloss: ['Schloss mit Burgflügel', 'Schlossresidenz']
+  };
+  // Leben in der Stadt (Grafiken von Fable): Fahrzeug-Typen, Boote, Personen
+  MC.CARS = ['kleinwagen', 'limousine', 'lieferwagen', 'taxi', 'cabrio'];
+  MC.BOATS = ['segel', 'motor'];
+  MC.PEOPLE = 6;
+
   MC.FEATURES = {
     deko: 1,        // Laden-Reiter Deko (anfangs nur Blumenbeet)
     gewerbe: 2,     // Laden-Reiter Gewerbe
@@ -293,6 +316,8 @@
     tipp_sofort: 'Dauert dir ein Bau zu lange? Tipp auf die Baustelle, dort kannst du sie mit Geld oder Gold sofort fertigstellen.',
     tipp_bestenliste: 'Schon gesehen? In der Bestenliste stehen alle Städte. Tipp eine an und schau dich dort um. Holt euch Ideen bei den anderen.',
     tipp_code: 'Dein Spielstand liegt sicher in der Cloud. Mit dem Stadt-Code im Menü spielst du auf jedem Gerät weiter.',
+    tipp_netz: 'Achtung, diese Straße hängt nicht am Hauptnetz! Nur Häuser am durchgehenden Straßennetz bekommen Mieter. Verbinde die Straßen miteinander.',
+    tipp_ausbau: 'Neu: Du kannst Häuser ausbauen! Auf derselben Fläche wohnen dann mehr Leute, und die Miete steigt. Ideal, wenn der Platz knapp wird.',
     tipp_strasse: 'Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben.',
     tipp_sammeln: 'Ein Sammelstück! Die findest du ab und zu beim Kassieren. Eine volle Sammlung tauschst du in der Firmenzentrale gegen eine Belohnung ein.',
     langer_vertrag: 'Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich.',

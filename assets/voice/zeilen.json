@@ -225,6 +225,14 @@
    "text": "Dein Spielstand liegt sicher in der Cloud. Mit dem Stadt-Code im Menü spielst du auf jedem Gerät weiter."
   },
   {
+   "id": "tipp_netz",
+   "text": "Achtung, diese Straße hängt nicht am Hauptnetz! Nur Häuser am durchgehenden Straßennetz bekommen Mieter. Verbinde die Straßen miteinander."
+  },
+  {
+   "id": "tipp_ausbau",
+   "text": "Neu: Du kannst Häuser ausbauen! Auf derselben Fläche wohnen dann mehr Leute, und die Miete steigt. Ideal, wenn der Platz knapp wird."
+  },
+  {
    "id": "tipp_strasse",
    "text": "Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben."
   },
