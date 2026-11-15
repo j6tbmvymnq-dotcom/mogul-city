@@ -413,6 +413,8 @@
   }
   function draw(now) {
     if (!W || !H) { resize(); return; }
+    // Größe geändert ohne resize-Ereignis (z. B. App aus dem Hintergrund): neu vermessen, sonst wird das Bild verzerrt
+    if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(window.devicePixelRatio || 1, 2) !== dpr) resize();
     if (itemsDirty) rebuildItems();
     if (now - statT > 300) refreshStates(now);
 

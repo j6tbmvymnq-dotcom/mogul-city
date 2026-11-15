@@ -163,7 +163,9 @@
     // iPad: nur im Vollbild (in Split View / Stage Manager ist ein kleineres Fenster richtig)
     if (I.env.ipad && window.innerWidth < fullW - 2) { document.documentElement.classList.remove('vpfix'); I.vp = ''; return; }
     var root = document.documentElement, short = window.innerHeight < full - 10;
-    root.classList.toggle('vpfix', short);
+    // einmal nötig = bleibt an: beim Zurückholen aus dem Hintergrund meldet iOS kurz die volle Höhe, danach wieder die kurze
+    // (ohne neues resize-Ereignis). Volle Bildschirmhöhe zu setzen schadet nicht, wenn das Fenster wirklich voll ist.
+    if (short) root.classList.add('vpfix');
     root.style.setProperty('--fullh', full + 'px');
     I.vp = window.innerHeight + '/' + full + '/' + Math.round(window.visualViewport ? window.visualViewport.height : 0) + '/' + root.clientHeight + (short ? '/fix' : '');
   }
@@ -171,6 +173,9 @@
   fitPhone();
   window.addEventListener('resize', fitPhone);
   window.addEventListener('orientationchange', function () { setTimeout(fitPhone, 150); });
+  function later() { [60, 400, 1200].forEach(function (t) { setTimeout(fitPhone, t); }); }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) later(); });
+  window.addEventListener('pageshow', later);
 
   // iPhone/iPad: zusätzlich ein Manifest mit fester Startadresse samt Code (falls iOS die start_url doch liest)
   I.pinCode = function (code) {
