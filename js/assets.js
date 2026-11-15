@@ -129,11 +129,18 @@
 
   // Musik: Stücke aus dem Manifest nacheinander in Schleife
   var musicSrc = null, musicOn = false, track = 0;
+  AS.musicMode = 'erde';
+  AS.setMusicMode = function (m) {   // Erde/Mond: anderes Stück, falls vorhanden
+    if (AS.musicMode === m) return;
+    AS.musicMode = m;
+    if (musicOn) { AS.music(false); AS.music(true); }
+  };
   AS.music = function (on) {
     musicOn = on;
     if (!on) { if (musicSrc) try { musicSrc.stop(); } catch (e) { } musicSrc = null; return; }
     if (musicSrc || !AS.ctx()) return;
-    var list = MC.MUSIC.map(function (m) { return m[0]; }).filter(function (id) { return AS.manifest.sounds[id]; });
+    var all = MC.MUSIC.map(function (m) { return m[0]; }).filter(function (id) { return AS.manifest.sounds[id]; });
+    var list = AS.musicMode === 'mond' && all.indexOf('musik_mond') >= 0 ? ['musik_mond'] : all.filter(function (id) { return id !== 'musik_mond'; });
     if (!list.length) return;
     var id = list[track % list.length];
     musicSrc = { stop: function () { } };

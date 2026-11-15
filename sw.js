@@ -1,9 +1,9 @@
 /* Mogul City – Offline-Cache. Bei jeder Änderung am Spiel VERSION erhöhen. */
-var VERSION = 'mogulcity-15adf326';
+var VERSION = 'mogulcity-137faae3';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/config.js', 'js/data.js', 'js/game.js', 'js/cloud.js', 'js/assets.js', 'js/art.js', 'js/view.js', 'js/ui.js',
-  'js/install.js', 'js/tutorial.js', 'assets/staedte/bella.json', 'assets/staedte/viktor.json',
+  'js/install.js', 'js/tutorial.js', 'js/mond.js', 'js/mondui.js', 'assets/staedte/bella.json', 'assets/staedte/viktor.json',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 // Alle Assets aus dem Manifest (Grafik, Ton, Sprache) für den Offline-Betrieb vorab laden

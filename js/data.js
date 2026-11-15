@@ -227,10 +227,14 @@
     ['found', 'Sammelstück gefunden (Glitzern)'],
     ['set', 'Sammlung komplett'],
     ['gold', 'Gold ausgegeben / Sofort fertig'],
-    ['error', 'Geht nicht / zu wenig Geld (sanft)']
+    ['error', 'Geht nicht / zu wenig Geld (sanft)'],
+    ['mond_tap', 'Mond: Durchgang gestartet (kurzes, freundliches Sci-Fi-Piepen)'],
+    ['mond_start', 'Mond: Frachtrakete startet (Zündung, Schub, 1–2 s)'],
+    ['mond_bau', 'Mond: Betrieb gekauft (metallisches Andocken/Einrasten)']
   ];
   MC.MUSIC = [['musik_1', 'Hauptthema: entspannt, beschwingt, Lounge/Jazz-Pop, nahtlose Schleife 60–120 s'],
-    ['musik_2', 'Zweites Stück im selben Stil (optional, wird abwechselnd gespielt)']];
+    ['musik_2', 'Zweites Stück im selben Stil (optional, wird abwechselnd gespielt)'],
+    ['musik_mond', 'Mond: sphärisch und ruhig, warme Synth-Flächen, leises Piepen und Funkrauschen, trotzdem freundlich; nahtlose Schleife 60–120 s (optional)']];
 
   /* Sprecherzeilen der Berater (zusätzlich liest der Berater jede Ziel-Beschreibung vor: mission_<nr>) */
   MC.VOICE = {
@@ -273,6 +277,13 @@
     tipp_gewerbe: 'Dein Laden verdient an jedem Bewohner in der Nähe, aber nur, solange dessen Mietvertrag läuft. Halte die Häuser rundherum also vermietet.',
     tipp_pinsel: 'Viele Häuser auf einmal? Tipp unten auf Vermieten, wähl einen Vertrag und wisch einfach über die Häuser. Fällige werden dabei gleich kassiert.',
     tipp_nacht: 'Die Sonne geht unter, Chef. Schau mal, wie deine Stadt jetzt leuchtet! Bewohnte Häuser machen Licht, leere bleiben dunkel.',
+    neu_mond: 'Chef, die Raumfähre ist startklar! Auf dem Mond warten Rohstoffe, Helium-3 und Platz für Kolonisten. Lass uns dort eine Kolonie gründen.',
+    mond_start: 'Willkommen auf dem Mond! Hier zählt kein Geld, sondern Rohstoffe. Tipp den Bagger an, dann schürft er Baustoffe. Mehr Bagger, mehr Baustoffe.',
+    mond_kuppel: 'Für Minen und Fabriken brauchst du Arbeiter. Bau Wohnkuppeln, dann ziehen Kolonisten ein.',
+    mond_manager: 'Keine Lust, ständig zu tippen? Stell einen Manager ein. Den bezahlst du mit Geld von der Erde, dafür arbeitet er auch, wenn du weg bist.',
+    mond_rakete: 'Dein erstes Helium-3! Pack es in die Frachtrakete und flieg es zur Erde, dort wird es zu barem Geld. Denk an den Treibstoff.',
+    mond_bonus: 'Je mehr Kolonisten auf dem Mond leben, desto mehr Miete zahlen die Leute auf der Erde. Bis zu fünfzehn Prozent!',
+    mond_sammeln: 'Ein Fund vom Mond! Auch hier oben gibt es Sammlungen. Volle Sammlungen tauschst du gegen Rohstoffe und Gold.',
     tipp_ziel: 'Oben links steht immer dein aktuelles Ziel, mit Fortschritt. Tipp drauf, dann siehst du alle Ziele und die Belohnung.',
     tipp_2d: 'Wird es eng? Mit dem Knopf 2D rechts unten legst du alle Gebäude flach hin. So siehst du jede Straße und jedes freie Feld. Mit 3D geht es zurück.',
     tipp_strassenmodus: 'Straßen ziehst du einfach mit dem Finger. Tippst du auf eine vorhandene Straße, verschwindet sie wieder.',

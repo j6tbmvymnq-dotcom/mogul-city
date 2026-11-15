@@ -161,6 +161,34 @@
    "text": "Die Sonne geht unter, Chef. Schau mal, wie deine Stadt jetzt leuchtet! Bewohnte Häuser machen Licht, leere bleiben dunkel."
   },
   {
+   "id": "neu_mond",
+   "text": "Chef, die Raumfähre ist startklar! Auf dem Mond warten Rohstoffe, Helium-3 und Platz für Kolonisten. Lass uns dort eine Kolonie gründen."
+  },
+  {
+   "id": "mond_start",
+   "text": "Willkommen auf dem Mond! Hier zählt kein Geld, sondern Rohstoffe. Tipp den Bagger an, dann schürft er Baustoffe. Mehr Bagger, mehr Baustoffe."
+  },
+  {
+   "id": "mond_kuppel",
+   "text": "Für Minen und Fabriken brauchst du Arbeiter. Bau Wohnkuppeln, dann ziehen Kolonisten ein."
+  },
+  {
+   "id": "mond_manager",
+   "text": "Keine Lust, ständig zu tippen? Stell einen Manager ein. Den bezahlst du mit Geld von der Erde, dafür arbeitet er auch, wenn du weg bist."
+  },
+  {
+   "id": "mond_rakete",
+   "text": "Dein erstes Helium-3! Pack es in die Frachtrakete und flieg es zur Erde, dort wird es zu barem Geld. Denk an den Treibstoff."
+  },
+  {
+   "id": "mond_bonus",
+   "text": "Je mehr Kolonisten auf dem Mond leben, desto mehr Miete zahlen die Leute auf der Erde. Bis zu fünfzehn Prozent!"
+  },
+  {
+   "id": "mond_sammeln",
+   "text": "Ein Fund vom Mond! Auch hier oben gibt es Sammlungen. Volle Sammlungen tauschst du gegen Rohstoffe und Gold."
+  },
+  {
    "id": "tipp_ziel",
    "text": "Oben links steht immer dein aktuelles Ziel, mit Fortschritt. Tipp drauf, dann siehst du alle Ziele und die Belohnung."
   },

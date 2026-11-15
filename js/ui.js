@@ -26,6 +26,9 @@
     o.start(ac.currentTime + t0); o.stop(ac.currentTime + t0 + len + 0.02);
   }
   var SYNTH = {
+    mond_tap: function () { tone(1320, 0, 0.05, 'sine', 0.05); tone(1760, 0.05, 0.06, 'sine', 0.04); },
+    mond_bau: function () { tone(220, 0, 0.08, 'square', 0.04); tone(330, 0.07, 0.12, 'triangle', 0.05); },
+    mond_start: function () { for (var i = 0; i < 8; i++) tone(90 + i * 25, i * 0.08, 0.18, 'sawtooth', 0.03); },
     tap: function () { tone(700, 0, 0.03, 'sine', 0.04); },
     open: function () { tone(520, 0, 0.06, 'sine', 0.05); tone(780, 0.04, 0.08, 'sine', 0.04); },
     close: function () { tone(600, 0, 0.06, 'sine', 0.04); tone(420, 0.04, 0.08, 'sine', 0.035); },
@@ -128,6 +131,7 @@
     missionWasDone = done;
     goalBox(m);
     flatBtn();
+    var mb = $('moonBtn'); if (mb) mb.hidden = !(G.moonUnlocked && G.moonUnlocked()) || G.visiting || G.inTut();
     if (V.mode === 'move') moveBanner();
     features();
   }
@@ -433,7 +437,7 @@
       h = hero(d, chips) + '<div class="row" style="margin-top:10px"><button class="btn goldbtn" style="flex:1" data-do="invite">Weitere Freunde einladen</button></div>' + footer(b, d);
     } else if (d.kind === 'wonder') {
       chips.push(chip('Wirkt stadtweit', 'y'));
-      h = hero(d, chips) + footer(b, d);
+      h = hero(d, chips) + (d.id === 'w_rakete' && st !== 'build' && !G.visiting ? '<div class="row" style="margin-top:10px"><button class="btn goldbtn" style="flex:1" data-do="moon">Zum Mond fliegen</button></div>' : '') + footer(b, d);
     } else {
       h = hqHtml();
     }
@@ -545,6 +549,7 @@
   }
 
   // ---------- Dialoge ----------
+  UI.modal = function (h, x) { modal(h, x); };
   function modal(html, handlers) { modalQueue.push({ html: html, handlers: handlers || {} }); if (!modalOpen) nextModal(); }
   var modalHandlers = {};
   function nextModal() {
@@ -924,6 +929,7 @@
     if (v === 'ranking') { MC.Cloud.track('bestenliste'); return openRanking(); }
     if (v === 'brush') { brushNext = !brushNext; if (brushNext) applyAll = false; return b && openBuilding(b); }
     if (v === 'invite') return openInvite();
+    if (v === 'moon') { closeSheet(true); return MC.Moon.open(); }
     if (v === 'sendinvite') return sendInvite();
     if (v === 'buildfriend') { closeSheet(true); return V.setMode('place', { def: MC.DEF.w_freunde }); }
     if (v === 'advisor') return chooseAdvisor(false);
@@ -982,6 +988,18 @@
     if (ng && !ng.moving && (G.S.cash < ng.def.cost || G.S.gold < (ng.def.gold || 0))) { V.setMode('idle'); UI.toast('Das Geld reicht nicht für ein weiteres Stück.'); }
   });
   $('menuBtn').addEventListener('click', function () { UI.sound('tap'); openMenu(); });
+  $('moonBtn').addEventListener('click', function () { if (V.mode !== 'idle') V.setMode('idle'); closeSheet(true); MC.Moon.open(); });
+  // Mond freigeschaltet (Raumfähre fertig) – einmal groß ankündigen
+  function moonIntro() {
+    if (!G.moonUnlocked || !G.moonUnlocked() || G.S.moon || G.S.seen.mond_intro || G.visiting || G.inTut()) return;
+    G.markSeen('mond_intro');
+    modal(art('bild_mond', 'w_rakete') + '<h2>Der Mond wartet!</h2><p>Deine Raumfähre ist startklar. Gründe eine Kolonie: Rohstoffe schürfen, Kolonisten ansiedeln, Helium-3 zur Erde fliegen – und mit jedem Kolonisten zahlen deine Mieter auf der Erde mehr.</p>' +
+      '<div class="row"><button class="btn ghost" data-m="no">Später</button><button class="btn goldbtn" data-m="go">Zum Mond fliegen</button></div>', {
+      go: function () { setTimeout(function () { MC.Moon.open(); }, 60); }
+    });
+    UI.say('neu_mond');
+  }
+  UI.moonIntro = moonIntro;
   $('flatBtn').addEventListener('click', function () {
     UI.sound('tap'); V.setFlat(!V.flat);
     if (V.flat && !G.S.seen.flat) { G.markSeen('flat'); UI.toast('Flache Ansicht: Gebäude liegen als Grundfläche, nichts verdeckt Straßen. Ideal zum Umbauen.'); }
@@ -1093,6 +1111,7 @@
     if (type === 'built' && MC.DEF[d.b.t].kind === 'shop') setTimeout(function () { tip('tipp_gewerbe'); }, 1500);
     if (type === 'build') { var bd = MC.DEF[d.b.t]; if ((bd.kind === 'house' || bd.kind === 'shop') && !G.touchesRoad(bd, d.b.x, d.b.y)) setTimeout(function () { tip('tipp_strasse'); }, 600); }
     if (type === 'found') setTimeout(function () { tip('tipp_sammeln'); }, 1200);
+    if (type === 'built' && d.b.t === 'w_rakete') setTimeout(moonIntro, 1800);
     if (type === 'build' && d.b.cu && d.b.cu - G.now() >= 10 * MC.MIN) setTimeout(function () { tip('tipp_sofort'); }, 1500);
     if ((type === 'collect' || type === 'expire' || type === 'built') && G.unlocked('lease') && !G.S.seen.tip_tipp_pinsel) {
       var many = 0, tt = G.now();
@@ -1144,6 +1163,7 @@
     }
     if (MC.Install.standalone()) MC.Cloud.track('app', null, 'app');
     setTimeout(function () { checkFriends(true); }, 4000);   // neue Freunde seit dem letzten Mal?
+    setTimeout(moonIntro, 6000);   // Raumfähre schon fertig, Mond noch nie besucht
     if ((G.S.sessions || 1) >= 2) setTimeout(function () { tip('tipp_bestenliste'); }, 45000);
     if ((G.S.sessions || 1) >= 3 && MC.Cloud.enabled) setTimeout(function () { tip('tipp_code'); }, 90000);
     if (MC.Install.vp) MC.Cloud.track('anzeige', MC.Install.vp, 'anzeige_' + MC.Install.vp);   // Fenstermaße der iPhone-App (Fehlersuche)

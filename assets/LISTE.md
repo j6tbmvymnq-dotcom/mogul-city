@@ -186,6 +186,41 @@ Erzeugt mit `node tools/assets.js`. Status: ok / fehlt / FEHLER. Vorgaben: [ASSE
 |---|---|---|---|
 | sprites/bild_zurueck.svg | 480×300 | Willkommen zurück: Stadt im Morgenlicht, Münzen/Briefkasten mit Post (Dialog-Kopfbild) *(optional)* | fehlt |
 
+## Mond
+
+| Datei | Maße | Inhalt | Status |
+|---|---|---|---|
+| sprites/mond_panorama.svg | 1200×400 | Mond-Panorama (Hintergrund oben im Mond-Bildschirm): sternenklarer schwarzblauer Himmel, Erde als blauer Planet oben rechts, untere 35 % graue Mondoberfläche mit Kratern, flach genug, dass Gebäude davor stehen können *(optional)* | fehlt |
+| sprites/mond_bagger.svg | 160×140 | Regolith-Bagger: kleiner Mond-Bagger/Rover mit Schaufel, schürft graues Gestein. Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_eis.svg | 160×140 | Eisbohrer: Roboter-Bohrturm über einem Krater, Eisbrocken, Tank mit blauem Treibstoff. Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_kuppel.svg | 160×140 | Wohnkuppel: Glaskuppel mit Wohnmodul, Licht in den Fenstern, kleine Schleuse. Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_mine.svg | 160×140 | Helium-Mine: Förderanlage mit violett leuchtendem Helium-3-Tank. Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_werk.svg | 160×140 | Baustoff-Fabrik: Industriehalle mit Förderband und Stapeln von Mondbeton-Blöcken. Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_raff.svg | 160×140 | Helium-Raffinerie: Türme/Tanks mit Rohren, violettes Leuchten. Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_hafen.svg | 160×140 | Raumhafen: Landeplattform mit Tower und Lichtern. Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_mega.svg | 160×140 | Mega-Kuppel: riesige Glaskuppel mit kleiner Stadt darin (Hochhäuser, Grün). Seitenansicht leicht von oben (3/4), freigestellt (transparent), steht unten mittig auf dem Boden; gleicher Stil wie die Stadt, aber Sci-Fi; wird im Panorama klein (ca. 12 % Breite) und in der Liste 56 px groß gezeigt *(optional)* | fehlt |
+| sprites/mond_rakete.svg | 160×140 | Frachtrakete (startbereit auf kleiner Rampe), freundlich, weiß-rot, gleicher Stil *(optional)* | fehlt |
+| sprites/mond_bau.svg | 64×64 | Rohstoff-Symbol: Baustoffe (Stapel graue Mondbeton-Blöcke), gut lesbar in 18 px, auf dunklem Grund *(optional)* | fehlt |
+| sprites/mond_fuel.svg | 64×64 | Rohstoff-Symbol: Treibstoff (blauer Tropfen/Kanister), gut lesbar in 18 px, auf dunklem Grund *(optional)* | fehlt |
+| sprites/mond_he3.svg | 64×64 | Rohstoff-Symbol: Helium-3 (violett leuchtende Kugel/Atom), gut lesbar in 18 px, auf dunklem Grund *(optional)* | fehlt |
+| sprites/mond_kol.svg | 64×64 | Rohstoff-Symbol: Kolonisten (Figur mit Raumhelm), gut lesbar in 18 px, auf dunklem Grund *(optional)* | fehlt |
+| sprites/mond_samm_meteor_1.svg | 128×128 | Mond-Sammlung Meteoriten: Eisenmeteorit *(optional)* | fehlt |
+| sprites/mond_samm_meteor_2.svg | 128×128 | Mond-Sammlung Meteoriten: Steinmeteorit *(optional)* | fehlt |
+| sprites/mond_samm_meteor_3.svg | 128×128 | Mond-Sammlung Meteoriten: Pallasit (mit grünen Kristallen) *(optional)* | fehlt |
+| sprites/mond_samm_meteor_4.svg | 128×128 | Mond-Sammlung Meteoriten: Tektit (schwarzes Glas) *(optional)* | fehlt |
+| sprites/mond_samm_meteor_5.svg | 128×128 | Mond-Sammlung Meteoriten: Sternenstaub (funkelnde Phiole) *(optional)* | fehlt |
+| sprites/mond_samm_andenken_1.svg | 128×128 | Mond-Sammlung Raumfahrt-Andenken: Missionsabzeichen (Stoff-Patch) *(optional)* | fehlt |
+| sprites/mond_samm_andenken_2.svg | 128×128 | Mond-Sammlung Raumfahrt-Andenken: Helm-Modell *(optional)* | fehlt |
+| sprites/mond_samm_andenken_3.svg | 128×128 | Mond-Sammlung Raumfahrt-Andenken: Flaggenwimpel *(optional)* | fehlt |
+| sprites/mond_samm_andenken_4.svg | 128×128 | Mond-Sammlung Raumfahrt-Andenken: Bordbuch *(optional)* | fehlt |
+| sprites/mond_samm_andenken_5.svg | 128×128 | Mond-Sammlung Raumfahrt-Andenken: Fußabdruck-Abguss *(optional)* | fehlt |
+| sprites/mond_samm_proben_1.svg | 128×128 | Mond-Sammlung Mondproben: Basalt *(optional)* | fehlt |
+| sprites/mond_samm_proben_2.svg | 128×128 | Mond-Sammlung Mondproben: Anorthosit (heller Stein) *(optional)* | fehlt |
+| sprites/mond_samm_proben_3.svg | 128×128 | Mond-Sammlung Mondproben: Regolith-Glas (Perlen) *(optional)* | fehlt |
+| sprites/mond_samm_proben_4.svg | 128×128 | Mond-Sammlung Mondproben: Eiskern (Bohrkern mit Eis) *(optional)* | fehlt |
+| sprites/mond_samm_proben_5.svg | 128×128 | Mond-Sammlung Mondproben: Helium-Kristall (violett) *(optional)* | fehlt |
+| sprites/bild_mond.svg | 480×300 | Einladung zum Mond: Raumfähre startet von der Stadt, Mond groß am Himmel (Dialog-Kopfbild) *(optional)* | fehlt |
+
 ## App
 
 | Datei | Maße | Inhalt | Status |
@@ -217,9 +252,13 @@ Erzeugt mit `node tools/assets.js`. Status: ok / fehlt / FEHLER. Vorgaben: [ASSE
 | sounds/set.mp3 | Sammlung komplett | ok (4.32 s) |
 | sounds/gold.mp3 | Gold ausgegeben / Sofort fertig | ok (2.12 s) |
 | sounds/error.mp3 | Geht nicht / zu wenig Geld (sanft) | ok (0.27 s) |
+| sounds/mond_tap.mp3 | Mond: Durchgang gestartet (kurzes, freundliches Sci-Fi-Piepen) | fehlt |
+| sounds/mond_start.mp3 | Mond: Frachtrakete startet (Zündung, Schub, 1–2 s) | fehlt |
+| sounds/mond_bau.mp3 | Mond: Betrieb gekauft (metallisches Andocken/Einrasten) | fehlt |
 | sounds/musik_1.mp3 | Hauptthema: entspannt, beschwingt, Lounge/Jazz-Pop, nahtlose Schleife 60–120 s *(Musik)* | ok (80.00 s) |
 | sounds/musik_2.mp3 | Zweites Stück im selben Stil (optional, wird abwechselnd gespielt) *(Musik)* | ok (73.85 s) |
+| sounds/musik_mond.mp3 | Mond: sphärisch und ruhig, warme Synth-Flächen, leises Piepen und Funkrauschen, trotzdem freundlich; nahtlose Schleife 60–120 s (optional) *(Musik)* | fehlt |
 
 ## Sprecher
 
-79 Zeilen je Berater (Texte in voice/zeilen.json), vorhanden: 158 von 158. Erzeugen: `tools/stimmen/vertone.py`.
+86 Zeilen je Berater (Texte in voice/zeilen.json), vorhanden: 172 von 172. Erzeugen: `tools/stimmen/vertone.py`.

@@ -151,6 +151,7 @@
       if (d.friend) { if (key === 'rent' || key === 'shop') v += G.friendBonus(); }
       else if (d.effect === key) v += d.val;
     }
+    if (key === 'rent' && G.moonBonus) v += G.moonBonus();   // Kolonisten auf dem Mond (js/mond.js)
     return v;
   }
   G.effect = effect;
