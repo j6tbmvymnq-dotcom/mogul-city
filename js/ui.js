@@ -143,13 +143,21 @@
     if (!on && t) t.parentNode.removeChild(t);
   }
   var FEAT_NAME = { deko: 'Deko', gewerbe: 'Gewerbe', move: 'Umsetzen', bulldoze: 'Abriss', collectall: 'Alles kassieren', daily: 'Tagesbonus', land: 'Grundstücke kaufen', sets: 'Sammlungen', wonder: 'Weltwunder', goldex: 'Gold-Tausch', premium: 'Premium-Gebäude' };
+  function num(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  // „noch 11.033 XP bis Level 30“ – bei mehreren Leveln bis zur Freischaltung zusätzlich die Gesamtsumme
+  function xpTo(L) {
+    var S = G.S, first = MC.xpNeed(S.lvl) - S.xp, all = first;
+    for (var l = S.lvl + 1; l < L; l++) all += MC.xpNeed(l);
+    return 'noch ' + num(first) + ' XP bis Level ' + (S.lvl + 1) + (L > S.lvl + 1 ? ' · bis Level ' + L + ' insgesamt ' + num(all) + ' XP' : '');
+  }
   function nextBox() {
+    if (G.visiting) return '';
     var nx = G.nextUnlock();
     if (!nx || G.S.legacy) return '';
     var names = nx.feats.map(function (f) { return FEAT_NAME[f]; }).concat(nx.items.map(function (d) { return d.name; }));
     var d = nx.items[0];
     return '<div class="nextbox">' + (d ? '<img src="' + A.url(d.id) + '" alt="">' : '') + '<div><b>Level ' + nx.lvl + ' bringt:</b><br>' + esc(names.join(', ')) +
-      '<br><span class="sub">noch ' + (MC.xpNeed(G.S.lvl) - G.S.xp) + ' XP bis Level ' + (G.S.lvl + 1) + '</span></div></div>';
+      '<br><span class="sub">' + xpTo(nx.lvl) + '</span></div></div>';
   }
   // neue Funktion nach dem Level-up vorstellen (im Tutorial erst danach)
   var pendingIntro = [];
@@ -364,18 +372,18 @@
       '<div class="stat"><b>' + MC.money(w.buildings) + '</b><span>Gebäude</span></div>' +
       '<div class="stat"><b>' + MC.money(w.land) + '</b><span>Grundstücke</span></div>' +
       '<div class="stat"><b>' + MC.money(w.gold) + '</b><span>Gold (' + S.gold + ' Barren)</span></div></div>' +
-      (G.unlocked('goldex') ? '<h4>Gold eintauschen</h4><div class="note">1 Gold = ' + MC.money(rate) + ' (Kurs steigt mit deinem Level)</div>' +
+      (G.unlocked('goldex') && !G.visiting ? '<h4>Gold eintauschen</h4><div class="note">1 Gold = ' + MC.money(rate) + ' (Kurs steigt mit deinem Level)</div>' +
       '<div class="row"><button class="btn goldbtn' + (S.gold ? '' : ' off') + '" data-do="ex1">1 Gold tauschen</button>' +
       '<button class="btn ghost' + (S.gold >= 10 ? '' : ' off') + '" data-do="ex10">10 Gold tauschen</button></div>' : '') +
       '<h4>Imperium</h4><div class="stats">' +
-      '<div class="stat"><b>' + S.xp + ' / ' + MC.xpNeed(S.lvl) + '</b><span>XP bis Level ' + (S.lvl + 1) + '</span></div>' +
+      '<div class="stat"><b>' + num(S.xp) + ' / ' + num(MC.xpNeed(S.lvl)) + '</b><span>XP bis Level ' + (S.lvl + 1) + '</span></div>' +
       '<div class="stat"><b>' + houses + ' / ' + shops + '</b><span>Häuser / Gewerbe</span></div>' +
-      '<div class="stat"><b>' + G.totalTenants() + '</b><span>Bewohner</span></div>' +
+      '<div class="stat"><b>' + num(G.totalTenants()) + '</b><span>Bewohner</span></div>' +
       '<div class="stat"><b>' + MC.money(S.st.earned) + '</b><span>insgesamt kassiert</span></div>' +
       '<div class="stat"><b>' + S.land.length + ' / 25</b><span>Grundstücke</span></div>' +
       '<div class="stat"><b>' + S.st.expired + '</b><span>verpasste Mieten</span></div></div>' +
-      '<div class="row">' + (G.unlocked('sets') ? '<button class="btn primary" data-do="sets">Sammlungen' + (ready ? ' (' + ready + ' fertig)' : '') + '</button>' : '') +
-      '<button class="btn ghost" data-do="ranking">Bestenliste</button><button class="btn ghost" data-do="rename">Stadt umbenennen</button>' + (G.unlocked('move') ? '<button class="btn ghost" data-do="move">Zentrale umsetzen</button>' : '') + '</div>';
+      (G.visiting ? '' : '<div class="row">' + (G.unlocked('sets') ? '<button class="btn primary" data-do="sets">Sammlungen' + (ready ? ' (' + ready + ' fertig)' : '') + '</button>' : '') +
+      '<button class="btn ghost" data-do="ranking">Bestenliste</button><button class="btn ghost" data-do="rename">Stadt umbenennen</button>' + (G.unlocked('move') ? '<button class="btn ghost" data-do="move">Zentrale umsetzen</button>' : '') + '</div>');
   }
 
   function openSets() {
@@ -909,6 +917,7 @@
       return;
     }
     if (MC.Install.standalone()) MC.Cloud.track('app', null, 'app');
+    if (MC.Install.vp) MC.Cloud.track('anzeige', MC.Install.vp, 'anzeige_' + MC.Install.vp);   // Fenstermaße der iPhone-App (Fehlersuche)
     if (!G.S.advisor) chooseAdvisor(true);
     else if (!G.S.name) askName(true);
     else if (G.inTut()) setTimeout(function () { MC.Tut.start(); }, 300);   // abgebrochenes Tutorial fortsetzen

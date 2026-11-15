@@ -296,3 +296,8 @@ body.gated #hud, body.gated #bar, body.gated #advisor, body.gated #banner, body.
 #install .arrow { position: fixed; left: 50%; bottom: calc(var(--sb) + 6px); width: 0; height: 0; margin-left: -12px;
   border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 16px solid #ffd96a; animation: instArrow 1.2s ease-in-out infinite; }
 @keyframes instArrow { 50% { transform: translateY(-8px); } }
+
+/* iPhone-App mit zu kurz gemeldetem Fenster (js/install.js, fitPhone): kein position: fixed, volle Höhe */
+html.vpfix, html.vpfix body { height: var(--fullh); }
+html.vpfix body { position: absolute; top: 0; left: 0; right: 0; bottom: auto; }
+html.vpfix #splash, html.vpfix #install { position: absolute; }

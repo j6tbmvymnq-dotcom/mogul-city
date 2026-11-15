@@ -347,7 +347,7 @@
       var it = items[i];
       if (!it.b) continue;
       var st = G.state(it.b, t), k = it.d.kind, icon = null;
-      if (st === 'build') icon = null;
+      if (st === 'build' || G.visiting) icon = null;   // beim Besuch: Stadt ohne Hinweisschilder zeigen
       else if (st === 'noroad') icon = 'noroad';
       else if (k === 'house') {
         if (st === 'empty') icon = 'contract';

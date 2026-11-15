@@ -150,17 +150,21 @@
     I.refresh();
   };
 
-  // iPhone-App mit durchsichtiger Statusleiste: iOS meldet die Fensterhöhe teils um die Statusleiste zu kurz,
-  // unten bleibt dann ein Streifen frei. Dann die volle Bildschirmhöhe erzwingen (nur iPhone: dort immer Vollbild).
+  // iPhone-App (iOS 26): Das Fenster meldet sich um die Statusleiste zu kurz. Feste (position: fixed) Elemente
+  // schneidet iOS dann an dieser falschen Unterkante ab – unten bleibt ein Streifen in der Hintergrundfarbe.
+  // Abhilfe: volle Bildschirmhöhe setzen und die Seite ohne position: fixed aufbauen (Klasse vpfix, siehe style.css).
+  I.vp = '';
   function fitPhone() {
     if (!ios || I.env.ipad || !I.standalone() || !window.screen) return;
     var portrait = window.matchMedia && window.matchMedia('(orientation: portrait)').matches;
     var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    var st = document.body.style;
-    if (window.innerHeight < full - 10) { st.height = full + 'px'; st.bottom = 'auto'; } else { st.height = ''; st.bottom = ''; }
+    var root = document.documentElement, short = window.innerHeight < full - 10;
+    root.classList.toggle('vpfix', short);
+    root.style.setProperty('--fullh', full + 'px');
+    I.vp = window.innerHeight + '/' + full + '/' + Math.round(window.visualViewport ? window.visualViewport.height : 0) + '/' + root.clientHeight + (short ? '/fix' : '');
   }
   I.fitPhone = fitPhone;
-  if (document.body) fitPhone(); else document.addEventListener('DOMContentLoaded', fitPhone);
+  fitPhone();
   window.addEventListener('resize', fitPhone);
   window.addEventListener('orientationchange', function () { setTimeout(fitPhone, 150); });
 
