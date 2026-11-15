@@ -156,9 +156,12 @@
   // Abhilfe: volle Bildschirmhöhe setzen und die Seite ohne position: fixed aufbauen (Klasse vpfix, siehe style.css).
   I.vp = '';
   function fitPhone() {
-    if (!ios || I.env.ipad || !I.standalone() || !window.screen) return;
+    if (!ios || !I.standalone() || !window.screen) return;
     var portrait = window.matchMedia && window.matchMedia('(orientation: portrait)').matches;
     var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    var fullW = portrait ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+    // iPad: nur im Vollbild (in Split View / Stage Manager ist ein kleineres Fenster richtig)
+    if (I.env.ipad && window.innerWidth < fullW - 2) { document.documentElement.classList.remove('vpfix'); I.vp = ''; return; }
     var root = document.documentElement, short = window.innerHeight < full - 10;
     root.classList.toggle('vpfix', short);
     root.style.setProperty('--fullh', full + 'px');

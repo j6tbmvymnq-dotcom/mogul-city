@@ -267,6 +267,7 @@ body.visiting #bar, body.visiting #nextIc { display: none !important; }
 
 @media (max-width: 560px) {
   .worth { display: none; }
+  #menuBtn { margin-left: auto; }   /* ohne Firmenwert-Feld: Menü trotzdem ganz rechts */
   .pill { height: 38px; padding-right: 10px; }
   .iconbtn { width: 38px; padding: 0; }   /* rund und mittig (sonst 40x38 und Symbol 5 px nach links) */
   #lvlBox { flex-basis: 150px; }
@@ -302,7 +303,6 @@ body.gated #hud, body.gated #bar, body.gated #advisor, body.gated #banner, body.
 html.vpfix, html.vpfix body { height: var(--fullh); }
 html.vpfix body { position: absolute; top: 0; left: 0; right: 0; bottom: auto; }
 html.vpfix #splash, html.vpfix #install { position: absolute; }
-#menuBtn { margin-left: auto; }
 
 /* ---------- Aktuelles Ziel (oben links) ---------- */
 #goal { position: absolute; top: calc(var(--st) + 56px); left: calc(var(--sl) + 8px); max-width: min(300px, calc(100% - 16px));
