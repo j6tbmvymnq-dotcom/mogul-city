@@ -10,6 +10,7 @@
   MC.SECTORS = 5;          // 5 x 5 Sektoren
   MC.MAP = MC.SECTOR * MC.SECTORS;
   MC.START_CASH = 150000;
+  MC.LIST_LVL = 5;         // Städte erscheinen erst ab diesem Level in der Bestenliste (eigene Stadt immer)
   MC.FRIEND_MAX = 25;      // höchstens +25 % durch Freunde
   MC.FRIEND_FIRST = 5;     // erster Freund: +5 %, jeder weitere +1 %
   MC.FRIEND_PROMPTS = [5, 8, 12];   // Berater werben bei diesen Level-Aufstiegen fürs Einladen (solange kein Freund mitspielt)
@@ -267,6 +268,15 @@
     tipp_deko: 'Deko ist mehr als Schmuck: Jedes Beet und jeder Baum hebt die Miete der Häuser daneben, und mehrere Stücke um ein Haus zählen zusammen. Beim Platzieren siehst du den Bonus.',
     tipp_gewerbe: 'Dein Laden verdient an jedem Bewohner in der Nähe, aber nur, solange dessen Mietvertrag läuft. Halte die Häuser rundherum also vermietet.',
     tipp_pinsel: 'Viele Häuser auf einmal? Tipp unten auf Vermieten, wähl einen Vertrag und wisch einfach über die Häuser. Fällige werden dabei gleich kassiert.',
+    tipp_ziel: 'Oben links steht immer dein aktuelles Ziel, mit Fortschritt. Tipp drauf, dann siehst du alle Ziele und die Belohnung.',
+    tipp_2d: 'Wird es eng? Mit dem Knopf 2D rechts unten legst du alle Gebäude flach hin. So siehst du jede Straße und jedes freie Feld. Mit 3D geht es zurück.',
+    tipp_strassenmodus: 'Straßen ziehst du einfach mit dem Finger. Tippst du auf eine vorhandene Straße, verschwindet sie wieder.',
+    tipp_umsetzen: 'Tipp ein Gebäude an, zieh es an die neue Stelle und setz es ab. Das kostet eine kleine Gebühr, und laufende Verträge starten danach neu.',
+    tipp_abriss: 'Beim Abreißen bekommst du einen Teil des Baupreises zurück. Überleg es dir also gut, umsetzen ist oft die bessere Wahl.',
+    tipp_eile: 'Siehst du den roten Ring um die Münze? Die Miete verfällt bald. Schnell kassieren, sonst ziehen die Mieter aus!',
+    tipp_sofort: 'Dauert dir ein Bau zu lange? Tipp auf die Baustelle, dort kannst du sie mit Geld oder Gold sofort fertigstellen.',
+    tipp_bestenliste: 'Schon gesehen? In der Bestenliste stehen alle Städte. Tipp eine an und schau dich dort um. Holt euch Ideen bei den anderen.',
+    tipp_code: 'Dein Spielstand liegt sicher in der Cloud. Mit dem Stadt-Code im Menü spielst du auf jedem Gerät weiter.',
     tipp_strasse: 'Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben.',
     tipp_sammeln: 'Ein Sammelstück! Die findest du ab und zu beim Kassieren. Eine volle Sammlung tauschst du in der Firmenzentrale gegen eine Belohnung ein.',
     langer_vertrag: 'Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich.',

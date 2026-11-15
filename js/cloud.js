@@ -125,7 +125,7 @@
   CL.listCities = function () {
     if (!CL.enabled) return Promise.resolve([]);
     return Promise.all([rpc('list_cities', { p_code: CL.code }), rpc('my_pub', { p_code: CL.code }).catch(function () { return null; })])
-      .then(function (r) { var mine = r[1]; return (r[0] || []).filter(function (c) { return c.pub_id !== mine; }); })
+      .then(function (r) { var mine = r[1]; return (r[0] || []).filter(function (c) { return c.pub_id !== mine && (c.lvl || 0) >= MC.LIST_LVL; }); })
       .catch(function () { return []; });
   };
   CL.getCity = function (pub) { return rpc('get_city', { p_pub: pub }); };

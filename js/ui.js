@@ -62,6 +62,7 @@
   }
   var sayTimer = null, lastSay = {};
   // Sprechblase + (falls vorhanden) Sprachaufnahme; line = Schlüssel aus MC.VOICE oder mission_<nr>
+  var sayUntil = 0;   // bis wann der Berater gerade spricht (Tipps warten, statt sich gegenseitig zu überschreiben)
   UI.say = function (line, text, minGap) {
     if (MC.Tut && MC.Tut.active()) return;   // während das Tutorial läuft, spricht nur das Tutorial
     var now = Date.now();
@@ -74,6 +75,7 @@
     // bei offenem Fenster nur die Stimme (Text steht z. B. im Ziele-Fenster schon, Blase würde Bedienung verdecken)
     $('advisor').hidden = !$('sheet').hidden || (window.MC.V && MC.V.mode !== 'idle');   // beim Bauen/Vermieten nur die Stimme
     clearTimeout(sayTimer);
+    sayUntil = now + Math.max(4000, text.length * 75);
     sayTimer = setTimeout(function () { $('advisor').hidden = true; }, Math.max(4000, text.length * 75));
     if (G.S.voice) AS.say(AS.voice(a.id, line));
   };
@@ -86,7 +88,7 @@
     var tries = 0;
     function go() {
       if (G.visiting) return;
-      if ((!$('sheet').hidden || modalOpen || V.mode !== 'idle') && !G.S.voice && tries++ < 240) return setTimeout(go, 500);
+      if (tries++ < 240 && (Date.now() < sayUntil || ((!$('sheet').hidden || modalOpen || V.mode !== 'idle') && !G.S.voice))) return setTimeout(go, 500);
       UI.say(key);
     }
     setTimeout(go, delay || 300);   // erst nach dem Öffnen eines Fensters prüfen (das blendet die Blase sonst gleich wieder aus)
@@ -151,6 +153,7 @@
     var box = $('goal'); if (!box) return;
     var show = !!m && !G.inTut() && !G.visiting && V.mode === 'idle' && !G.S.legacy;
     box.hidden = !show; if (!show) return;
+    if (!G.S.seen.tip_tipp_ziel && G.S.mission >= 4) tip('tipp_ziel', 9000);
     var done = !!m.done;
     box.classList.toggle('done', done);
     $('goalT').textContent = done ? 'Ziel erreicht – Belohnung abholen' : goalShort(m);
@@ -232,6 +235,14 @@
   UI.modeChanged = function () {
     var m = V.mode, place = m === 'place';
     goalBox(G.mission());
+    if (!G.visiting && !G.inTut()) {
+      var tm = { road: 'tipp_strassenmodus', move: 'tipp_umsetzen', bulldoze: 'tipp_abriss' }[m];
+      var shown = tm && tip(tm, 500);
+      // 2D-Ansicht: beim Bearbeiten, sobald die Stadt voller wird (und nicht schon ein anderer Tipp läuft)
+      if (!shown && m !== 'idle' && !V.flat && G.S.b.length >= 10 && tip('tipp_2d', 700)) {
+        var fb = $('flatBtn'); if (fb) { fb.classList.add('pulse'); setTimeout(function () { fb.classList.remove('pulse'); }, 7000); }
+      }
+    }
     if (m !== 'idle') $('advisor').hidden = true;
     $('bar').hidden = place; $('placebar').hidden = !place;
     $('banner').hidden = m === 'idle';
@@ -1073,6 +1084,7 @@
     if (type === 'built' && MC.DEF[d.b.t].kind === 'shop') setTimeout(function () { tip('tipp_gewerbe'); }, 1500);
     if (type === 'build') { var bd = MC.DEF[d.b.t]; if ((bd.kind === 'house' || bd.kind === 'shop') && !G.touchesRoad(bd, d.b.x, d.b.y)) setTimeout(function () { tip('tipp_strasse'); }, 600); }
     if (type === 'found') setTimeout(function () { tip('tipp_sammeln'); }, 1200);
+    if (type === 'build' && d.b.cu && d.b.cu - G.now() >= 10 * MC.MIN) setTimeout(function () { tip('tipp_sofort'); }, 1500);
     if ((type === 'collect' || type === 'expire' || type === 'built') && G.unlocked('lease') && !G.S.seen.tip_tipp_pinsel) {
       var many = 0, tt = G.now();
       G.S.b.forEach(function (x) { if (MC.DEF[x.t].kind === 'house') { var s2 = G.state(x, tt); if (s2 === 'empty' || s2 === 'expired' || s2 === 'ready') many++; } });
@@ -1123,6 +1135,8 @@
     }
     if (MC.Install.standalone()) MC.Cloud.track('app', null, 'app');
     setTimeout(function () { checkFriends(true); }, 4000);   // neue Freunde seit dem letzten Mal?
+    if ((G.S.sessions || 1) >= 2) setTimeout(function () { tip('tipp_bestenliste'); }, 45000);
+    if ((G.S.sessions || 1) >= 3 && MC.Cloud.enabled) setTimeout(function () { tip('tipp_code'); }, 90000);
     if (MC.Install.vp) MC.Cloud.track('anzeige', MC.Install.vp, 'anzeige_' + MC.Install.vp);   // Fenstermaße der iPhone-App (Fehlersuche)
     if (!G.S.advisor) chooseAdvisor(true);
     else if (!G.S.name) askName(true);
@@ -1176,6 +1190,11 @@
   // Tipp vor dem Gehen: nach 10 Minuten Spielzeit einmal pro Sitzung
   // Gegen Ende einer Sitzung an lange Verträge erinnern: erste Sitzung nach 12 Min. Spielzeit (ausführlich), später nach 20 Min. (kurz),
   // nur wenn gerade kurze Verträge laufen – genau dann würde die Miete in einer Pause verfallen
+  setInterval(function () {
+    if (document.hidden || G.inTut() || G.visiting || G.S.seen.tip_tipp_eile) return;
+    var t = G.now();
+    if (G.S.b.some(function (b) { return b.c && MC.DEF[b.t].kind === 'house' && G.state(b, t) === 'ready' && t > b.c.end + G.grace(b.c) * 0.75; })) tip('tipp_eile');
+  }, 4000);
   var playMs = 0, longSaid = false;
   setInterval(function () {
     if (document.hidden || longSaid || G.inTut() || G.visiting || G.S.lvl < 2) return;
