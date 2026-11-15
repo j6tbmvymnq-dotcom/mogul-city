@@ -1,0 +1,248 @@
+{
+ "advisors": [
+  {
+   "id": "viktor",
+   "name": "Viktor Kronberg",
+   "role": "Alter Hase im Immobiliengeschäft",
+   "color": "#3b6ea8",
+   "voice": "männlich, ca. 60, tief, warm, verschmitzt, leicht rauchig"
+  },
+  {
+   "id": "bella",
+   "name": "Bella Diamant",
+   "role": "Investorin aus Kyjiw mit Riecher für gute Geschäfte",
+   "color": "#c2417a",
+   "voice": "weiblich, ca. 30, Ukrainerin mit charmantem Akzent, warm, leicht rauchig, natürlich, trockener Humor"
+  }
+ ],
+ "lines": [
+  {
+   "id": "begruessung",
+   "text": "Willkommen in deiner neuen Stadt, Chef! Ich bin dein Berater. Lass uns aus diesem Stück Land ein Imperium machen."
+  },
+  {
+   "id": "ziel_fertig",
+   "text": "Hervorragend! Das Ziel ist erreicht. Hol dir deine Belohnung ab."
+  },
+  {
+   "id": "level",
+   "text": "Ein neues Level! Schau ins Baumenü, da gibt es Neues für dich."
+  },
+  {
+   "id": "verfallen",
+   "text": "Oh nein, die Mieter sind weg! Beim nächsten Mal rechtzeitig kassieren."
+  },
+  {
+   "id": "tagesbonus",
+   "text": "Schön, dass du wieder da bist! Hier ist dein Tagesbonus."
+  },
+  {
+   "id": "land",
+   "text": "Mehr Land, mehr Möglichkeiten. Gute Investition!"
+  },
+  {
+   "id": "sammlung",
+   "text": "Eine Sammlung komplett! Das zahlt sich aus."
+  },
+  {
+   "id": "kein_geld",
+   "text": "Dafür reicht das Geld noch nicht. Erst ein paar Mieten kassieren."
+  },
+  {
+   "id": "wunder",
+   "text": "Ein Weltwunder! Die ganze Stadt profitiert davon."
+  },
+  {
+   "id": "million",
+   "text": "Die erste Million! Ich wusste, dass in dir ein Mogul steckt."
+  },
+  {
+   "id": "alles",
+   "text": "Du hast alle Ziele geschafft. Ich bin sprachlos, Chef!"
+  },
+  {
+   "id": "tut_1",
+   "text": "Jede Stadt beginnt mit einer Straße. Tippe auf Straße und zieh sie entlang der Markierung."
+  },
+  {
+   "id": "tut_2",
+   "text": "Sehr gut. Jetzt dein erstes Haus: Tippe auf Bauen und wähle den Bungalow."
+  },
+  {
+   "id": "tut_3",
+   "text": "Setz ihn auf das leuchtende Feld direkt an der Straße und tippe dann auf Bauen."
+  },
+  {
+   "id": "tut_4",
+   "text": "Ein Haus ohne Mieter bringt nichts. Tippe auf das Vertragssymbol und nimm die Tagesgäste."
+  },
+  {
+   "id": "tut_5",
+   "text": "Während wir warten: Ein Blumenbeet macht die Miete teurer. Ich schenke dir eins. Setz es direkt neben das Haus."
+  },
+  {
+   "id": "tut_6",
+   "text": "Die Miete ist fällig! Tippe auf die Münze und hol sie dir."
+  },
+  {
+   "id": "tut_7",
+   "text": "Merk dir eins: Jede Miete muss rechtzeitig abgeholt werden. Wer zu spät kommt, dessen Mieter ziehen aus."
+  },
+  {
+   "id": "tut_8",
+   "text": "Unter Ziele siehst du immer, was als Nächstes zu tun ist. Viel Erfolg, Chef!"
+  },
+  {
+   "id": "neu_gewerbe",
+   "text": "Neu: Gewerbe! Ein Kaffeehaus verdient an jedem Bewohner in seiner Nähe. Bau es mitten zwischen deine Häuser."
+  },
+  {
+   "id": "neu_werkzeuge",
+   "text": "Ab jetzt kannst du Gebäude umsetzen und abreißen. Die Werkzeuge findest du unten in der Leiste."
+  },
+  {
+   "id": "neu_tagesbonus",
+   "text": "Neu: Mit Kassieren holst du alle fälligen Mieten auf einmal. Und wer jeden Tag vorbeischaut, bekommt einen Tagesbonus."
+  },
+  {
+   "id": "neu_land",
+   "text": "Deine Stadt wird zu klein? Ab jetzt kannst du Grundstücke kaufen. Tippe auf ein Verkaufsschild am Stadtrand."
+  },
+  {
+   "id": "neu_sammlung",
+   "text": "Neu: Sammlungen! Beim Kassieren findest du manchmal Sammelstücke. Volle Sammlungen tauschst du in der Zentrale gegen Belohnungen."
+  },
+  {
+   "id": "neu_wunder",
+   "text": "Jetzt wird es groß: Weltwunder! Sie wirken auf die ganze Stadt. Außerdem kannst du Gold eintauschen und Premium-Gebäude bauen."
+  },
+  {
+   "id": "langer_vertrag",
+   "text": "Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich."
+  },
+  {
+   "id": "zurueck",
+   "text": "Schön, dass du zurück bist, Chef! Schau mal, was in der Zwischenzeit passiert ist."
+  },
+  {
+   "id": "mission_1",
+   "text": "Baue 3 Felder Straße. Häuser und Läden brauchen einen Straßenanschluss."
+  },
+  {
+   "id": "mission_2",
+   "text": "Baue einen Bungalow direkt an eine Straße."
+  },
+  {
+   "id": "mission_3",
+   "text": "Tippe auf das fertige Haus und schließe einen Mietvertrag ab."
+  },
+  {
+   "id": "mission_4",
+   "text": "Kassiere die Miete, sobald der Vertrag abgelaufen ist – aber lass sie nicht verfallen!"
+  },
+  {
+   "id": "mission_5",
+   "text": "Besitze 3 fertige Häuser."
+  },
+  {
+   "id": "mission_6",
+   "text": "Setze 3 Dekorationen neben deine Häuser. Deko erhöht die Miete."
+  },
+  {
+   "id": "mission_7",
+   "text": "Baue ein Kaffeehaus mitten zwischen deine Häuser."
+  },
+  {
+   "id": "mission_8",
+   "text": "Kassiere Einnahmen aus einem Gewerbe. Es verdient an Bewohnern mit laufendem Mietvertrag."
+  },
+  {
+   "id": "mission_9",
+   "text": "Bringe ein Haus auf mindestens 12 % Deko-Bonus."
+  },
+  {
+   "id": "mission_10",
+   "text": "Kassiere 15 Mal Miete."
+  },
+  {
+   "id": "mission_11",
+   "text": "Erreiche einen Firmenwert von 100.000 $."
+  },
+  {
+   "id": "mission_12",
+   "text": "Kaufe ein angrenzendes Grundstück. Tippe auf ein Verkaufsschild am Stadtrand."
+  },
+  {
+   "id": "mission_13",
+   "text": "Bringe ein Haus auf mindestens 30 % Deko-Bonus."
+  },
+  {
+   "id": "mission_14",
+   "text": "Besitze 3 fertige Gewerbe."
+  },
+  {
+   "id": "mission_15",
+   "text": "Beherberge gleichzeitig 100 Bewohner."
+  },
+  {
+   "id": "mission_16",
+   "text": "Errichte das Gründerdenkmal (Weltwunder)."
+  },
+  {
+   "id": "mission_17",
+   "text": "Beim Kassieren findest du manchmal Sammelstücke. Vervollständige eine Sammlung in deiner Firmenzentrale."
+  },
+  {
+   "id": "mission_18",
+   "text": "Erreiche einen Firmenwert von 1 Million $."
+  },
+  {
+   "id": "mission_19",
+   "text": "Bringe ein Haus auf mindestens 60 % Deko-Bonus."
+  },
+  {
+   "id": "mission_20",
+   "text": "Besitze 5 Grundstücke."
+  },
+  {
+   "id": "mission_21",
+   "text": "Beherberge gleichzeitig 500 Bewohner."
+  },
+  {
+   "id": "mission_22",
+   "text": "Habe 3 Millionen $ auf dem Konto."
+  },
+  {
+   "id": "mission_23",
+   "text": "Erreiche einen Firmenwert von 10 Millionen $."
+  },
+  {
+   "id": "mission_24",
+   "text": "Bringe ein Haus auf mindestens 90 % Deko-Bonus."
+  },
+  {
+   "id": "mission_25",
+   "text": "Besitze 3 fertige Weltwunder."
+  },
+  {
+   "id": "mission_26",
+   "text": "Baue einen Wolkenkratzer."
+  },
+  {
+   "id": "mission_27",
+   "text": "Erreiche einen Firmenwert von 100 Millionen $."
+  },
+  {
+   "id": "mission_28",
+   "text": "Beherberge gleichzeitig 3.000 Bewohner."
+  },
+  {
+   "id": "mission_29",
+   "text": "Erreiche einen Firmenwert von 1 Milliarde $."
+  },
+  {
+   "id": "mission_30",
+   "text": "Besitze alle 7 Weltwunder."
+  }
+ ]
+}
