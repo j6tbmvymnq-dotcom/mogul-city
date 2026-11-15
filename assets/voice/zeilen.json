@@ -157,6 +157,10 @@
    "text": "Viele Häuser auf einmal? Tipp unten auf Vermieten, wähl einen Vertrag und wisch einfach über die Häuser. Fällige werden dabei gleich kassiert."
   },
   {
+   "id": "tipp_nacht",
+   "text": "Die Sonne geht unter, Chef. Schau mal, wie deine Stadt jetzt leuchtet! Bewohnte Häuser machen Licht, leere bleiben dunkel."
+  },
+  {
    "id": "tipp_ziel",
    "text": "Oben links steht immer dein aktuelles Ziel, mit Fortschritt. Tipp drauf, dann siehst du alle Ziele und die Belohnung."
   },

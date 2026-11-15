@@ -222,4 +222,4 @@ Erzeugt mit `node tools/assets.js`. Status: ok / fehlt / FEHLER. Vorgaben: [ASSE
 
 ## Sprecher
 
-78 Zeilen je Berater (Texte in voice/zeilen.json), vorhanden: 156 von 156. Erzeugen: `tools/stimmen/vertone.py`.
+79 Zeilen je Berater (Texte in voice/zeilen.json), vorhanden: 158 von 158. Erzeugen: `tools/stimmen/vertone.py`.

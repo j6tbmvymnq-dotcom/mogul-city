@@ -564,6 +564,7 @@
     }
     while (ai < amb.length) drawAmb(amb[ai++], now, vx0, vx1, vy0, vy1);
     if (!V.flat && !V.dbg.noLife) birds(now, vx0, vx1, vy0, vy1);
+    if (!V.flat) night(now, vx0, vx1, vy0, vy1);
     if (V.flat) drawFlat(t, movingId, q);
     if (q) {
       if (!gDrawn && !V.flat) drawGhost();
@@ -678,6 +679,155 @@
     }
   }
 
+  // ---------- Tag und Nacht nach dem echten Sonnenstand über der Mitte Deutschlands ----------
+  // Sonnenhöhe aus der Uhrzeit (UTC, unabhängig von der Zeitzone des Geräts), dann Lichtstimmung als Multiplizier-Schicht
+  // über der Welt und warme Lichter (Fenster bewohnter Häuser, Läden, Laternen, Scheinwerfer) darüber.
+  var GEO = { lat: 51.16, lon: 10.45 };
+  // Vorschau zu einer anderen Uhrzeit: …/?uhr=21:30 (Gerätezeit, nur zum Ausprobieren)
+  (function () {
+    var m = /[?&]uhr=(\d{1,2})[:.](\d{2})/.exec(location.search);
+    if (m) V.dbg.clock = function () { var d = new Date(); d.setHours(+m[1], +m[2], 0, 0); return d; };
+  })();
+  V.sun = function (date) {
+    var d = (date.getTime() / 86400000 + 2440587.5) - 2451545.0, rad = Math.PI / 180;
+    var g = (357.529 + 0.98560028 * d) * rad, q = 280.459 + 0.98564736 * d;
+    var L = (q + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * rad, e = (23.439 - 0.00000036 * d) * rad;
+    var ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / rad, dec = Math.asin(Math.sin(e) * Math.sin(L));
+    var gmst = (18.697374558 + 24.06570982441908 * d) % 24, ha = ((gmst + GEO.lon / 15) * 15 - ra) * rad, lat = GEO.lat * rad;
+    var h = Math.asin(Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(ha)) / rad;
+    var rising = Math.sin(ha) < 0;   // Stundenwinkel negativ = Vormittag
+    return { h: h, rising: rising };
+  };
+  // Stimmung je Sonnenhöhe (Grad): Farbe der Multiplizier-Schicht und Stärke der Lichter
+  var MOOD_EVE = [[12, '#ffffff'], [6, '#fff1dc'], [2, '#ffd2a0'], [0, '#f4a57c'], [-3, '#b48cba'], [-6, '#7c78b4'], [-9, '#4d5b9a'], [-13, '#38467f']];
+  var MOOD_MORN = [[12, '#ffffff'], [6, '#fff4e6'], [2, '#ffd6c0'], [0, '#f7b0a4'], [-3, '#bc94c2'], [-6, '#8582bc'], [-9, '#505e9e'], [-13, '#38467f']];
+  function hex(c) { var n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+  function moodAt(h, rising) {
+    var k = rising ? MOOD_MORN : MOOD_EVE, i;
+    if (h >= k[0][0]) return { col: null, light: 0, h: h };
+    for (i = 0; i < k.length - 1; i++) if (h >= k[i + 1][0]) break;
+    var a = k[i], b = k[Math.min(i + 1, k.length - 1)], f = a[0] === b[0] ? 1 : (a[0] - h) / (a[0] - b[0]);
+    var ca = hex(a[1]), cb = hex(b[1]), c = ca.map(function (v, j) { return Math.round(v + (cb[j] - v) * Math.max(0, Math.min(1, f))); });
+    var light = Math.max(0, Math.min(1, (2.5 - h) / 10));
+    return { col: 'rgb(' + c.join(',') + ')', light: light, h: h };
+  }
+  V.mood = function () {
+    if (G.S.daynight === false) return { col: null, light: 0, h: 90 };
+    var s = V.dbg.sunH !== undefined ? { h: V.dbg.sunH, rising: !!V.dbg.rising } : V.sun(V.dbg.clock ? V.dbg.clock() : new Date());
+    return moodAt(s.h, s.rising);
+  };
+  // Fenstermaske je Gebäudebild: helle Glasflächen (#8fd0ea-artig) als warmes Licht, in Blöcken teils an, teils aus
+  var masks = new WeakMap();
+  function windowMask(sp, seed) {
+    var m = masks.get(sp.c);
+    if (m !== undefined) return m;
+    m = null;
+    try {
+      var w = sp.c.width, h = sp.c.height, src = sp.c.getContext('2d').getImageData(0, 0, w, h).data;
+      var c = document.createElement('canvas'); c.width = w; c.height = h;
+      var q = c.getContext('2d'), img = q.createImageData(w, h), d = img.data, any = false;
+      var glass = new Uint8Array(w * h), lab = new Int32Array(w * h), n = 0, stack = [];
+      for (var k = 0; k < w * h; k++) {
+        var r = src[k * 4], gg = src[k * 4 + 1], bl = src[k * 4 + 2], al = src[k * 4 + 3];
+        glass[k] = al >= 200 && r >= 100 && bl >= 170 && bl >= r + 25 && gg >= r + 5 ? 1 : 0;
+      }
+      // zusammenhängende Glasflächen = einzelne Scheiben; jede Scheibe zufällig (aber fest) an oder aus
+      for (k = 0; k < w * h; k++) {
+        if (!glass[k] || lab[k]) continue;
+        n++; var hsh = ((n * 2654435761) ^ seed) >>> 0, lit = hsh % 100 < 58, cool = hsh % 9 === 0, px = [];
+        stack.push(k); lab[k] = n;
+        while (stack.length) {
+          var v = stack.pop(); px.push(v);
+          var vx = v % w, vy = (v - vx) / w;
+          if (vx > 0 && glass[v - 1] && !lab[v - 1]) { lab[v - 1] = n; stack.push(v - 1); }
+          if (vx < w - 1 && glass[v + 1] && !lab[v + 1]) { lab[v + 1] = n; stack.push(v + 1); }
+          if (vy > 0 && glass[v - w] && !lab[v - w]) { lab[v - w] = n; stack.push(v - w); }
+          if (vy < h - 1 && glass[v + w] && !lab[v + w]) { lab[v + w] = n; stack.push(v + w); }
+        }
+        // sehr große Glasflächen (Glastürme ohne Sprossen) in Etagen-Streifen teilen
+        var big = px.length > 1400;
+        for (var j = 0; j < px.length; j++) {
+          var pi = px[j], on = lit;
+          if (big) { var row = ((pi / w) | 0) / 14 | 0, h2 = ((row * 73856093) ^ seed) >>> 0; on = h2 % 100 < 55; }   // ganze Etagen hell oder dunkel
+          if (!on) continue;
+          var o = pi * 4; d[o] = cool ? 170 : 255; d[o + 1] = cool ? 200 : 186; d[o + 2] = cool ? 255 : 92; d[o + 3] = 255; any = true;
+        }
+      }
+      if (any) { q.putImageData(img, 0, 0); m = c; }
+    } catch (e) { m = null; }
+    masks.set(sp.c, m);
+    return m;
+  }
+  var lastMoodSay = 0;
+  function night(now, vx0, vx1, vy0, vy1) {
+    var md = V.mood();
+    V.light = md.light;
+    if (!md.col) return;
+    // 1) Stimmung: Welt einfärben (multiplizieren)
+    g.save();
+    g.globalCompositeOperation = 'multiply'; g.fillStyle = md.col;
+    g.fillRect(vx0 - 20, vy0 - 20, vx1 - vx0 + 40, vy1 - vy0 + 40);
+    var L = md.light;
+    if (L > 0.02) {
+      g.globalCompositeOperation = 'lighter';
+      var S = G.S, t = G.now(), i;
+      // 2) Laternen an den Straßen (Lichtkegel auf dem Boden + helle Lampe)
+      for (i = 0; i < S.roads.length; i++) {
+        var x = S.roads[i] % N, y = (S.roads[i] - x) / N;
+        if (((x * 7 + y * 3) % 4) !== 0) continue;
+        var lx = wx(x + 0.5, y + 0.5), ly = wy(x + 0.5, y + 0.5);
+        if (lx < vx0 - 60 || lx > vx1 + 60 || ly < vy0 - 60 || ly > vy1 + 60) continue;
+        var gr = g.createRadialGradient(lx, ly, 2, lx, ly, 34);
+        gr.addColorStop(0, 'rgba(255,200,110,' + (0.30 * L) + ')'); gr.addColorStop(1, 'rgba(255,200,110,0)');
+        g.fillStyle = gr; g.beginPath(); g.ellipse(lx, ly, 34, 19, 0, 0, Math.PI * 2); g.fill();
+      }
+      // 3) Gebäude: Fenster (bewohnt/geöffnet) und warmer Schein vor Läden
+      for (i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (!it.b || it.st === 'build') continue;
+        var sp = it.sp, k = it.d.kind;
+        if (it.sx + sp.w < vx0 || it.sx - sp.w > vx1 || it.sy + sp.h < vy0 || it.sy - sp.oy > vy1) continue;
+        var on = k === 'hq' || k === 'wonder' ? 0.9 : k === 'shop' ? (G.customers(it.b) > 0 ? 1 : 0.35) : k === 'house' ? (it.st === 'running' || it.st === 'ready' ? 1 : 0.12) : 0;
+        if (!on) continue;
+        var m = windowMask(sp, it.b.id * 2654435761);
+        if (m) { g.globalAlpha = Math.min(1, L * on * 0.78); g.drawImage(m, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h); g.globalAlpha = 1; }
+        if (k === 'shop' && on === 1) {
+          var s2 = it.d.size, cx = wx(it.b.x + s2 / 2, it.b.y + s2 / 2), cy = wy(it.b.x + s2 / 2, it.b.y + s2 / 2) + s2 * 6;
+          var sg = g.createRadialGradient(cx, cy, 4, cx, cy, s2 * 30);
+          sg.addColorStop(0, 'rgba(255,180,90,' + (0.32 * L) + ')'); sg.addColorStop(1, 'rgba(255,180,90,0)');
+          g.fillStyle = sg; g.beginPath(); g.ellipse(cx, cy, s2 * 30, s2 * 17, 0, 0, Math.PI * 2); g.fill();
+        }
+      }
+      // 4) Autos: Scheinwerferkegel vorne, Rücklichter hinten; Boote: Positionslicht
+      for (i = 0; i < life.cars.length; i++) {
+        var c = life.cars[i]; if (c.fx === undefined) continue;
+        var dx = DIRS[c.dir][0], dy = DIRS[c.dir][1];
+        var fx = wx(c.fx + dx * 0.2, c.fy + dy * 0.2), fy = wy(c.fx + dx * 0.2, c.fy + dy * 0.2) - 3;
+        var ex = wx(c.fx + dx * 0.75, c.fy + dy * 0.75), ey = wy(c.fx + dx * 0.75, c.fy + dy * 0.75);
+        if (fx < vx0 - 40 || fx > vx1 + 40 || fy < vy0 - 40 || fy > vy1 + 40) continue;
+        var mx = (fx + ex) / 2, my = (fy + ey + 3) / 2;
+        var hg = g.createRadialGradient(mx, my, 1, mx, my, 15);
+        hg.addColorStop(0, 'rgba(255,240,190,' + (0.26 * L) + ')'); hg.addColorStop(1, 'rgba(255,240,190,0)');
+        g.fillStyle = hg; g.beginPath(); g.ellipse(mx, my, 15, 9, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = 'rgba(255,250,220,' + (0.9 * L) + ')'; g.beginPath(); g.arc(fx, fy, 1.3, 0, Math.PI * 2); g.fill();
+        var bx2 = wx(c.fx - dx * 0.21, c.fy - dy * 0.21), by2 = wy(c.fx - dx * 0.21, c.fy - dy * 0.21) - 3;
+        g.fillStyle = 'rgba(255,60,40,' + (0.9 * L) + ')'; g.beginPath(); g.arc(bx2, by2, 1.4, 0, Math.PI * 2); g.fill();
+      }
+      g.globalCompositeOperation = 'source-over';
+      // Laternenköpfe als kleine helle Punkte (über allem, nicht addiert, damit sie nicht ausfressen)
+      g.fillStyle = 'rgba(255,236,180,' + (0.85 * L) + ')';
+      for (i = 0; i < S.roads.length; i++) {
+        var x2 = S.roads[i] % N, y2 = (S.roads[i] - x2) / N;
+        if (((x2 * 7 + y2 * 3) % 4) !== 0) continue;
+        var px = wx(x2 + 0.92, y2 + 0.5), py = wy(x2 + 0.92, y2 + 0.5);
+        if (px < vx0 - 20 || px > vx1 + 20 || py < vy0 - 20 || py > vy1 + 20) continue;
+        g.strokeStyle = 'rgba(40,45,60,.7)'; g.lineWidth = 1; g.beginPath(); g.moveTo(px, py); g.lineTo(px, py - 13); g.stroke();
+        g.beginPath(); g.arc(px, py - 14, 1.8, 0, Math.PI * 2); g.fill();
+      }
+    }
+    g.restore();
+  }
+
   // ---------- Leben in der Stadt: Autos, Fußgänger, Boote, Vögel ----------
   // Autos folgen dem Straßennetz (Rechtsverkehr, an Kreuzungen zufällig abbiegen, keine Kehrtwende außer in Sackgassen).
   // Fußgänger laufen am Straßenrand, ihre Zahl wächst mit den Bewohnern. Alles nur Deko, ohne Einfluss aufs Spiel.
@@ -704,7 +854,7 @@
     var roads = S.roads.length, tenants = 0;
     if (roads < 3) { life.on = false; life.cars.length = 0; life.peds.length = 0; return []; }
     S.b.forEach(function (b) { if (MC.DEF[b.t].kind === 'house' && b.c) tenants += b.c.n || 0; });
-    var wantCars = Math.min(36, Math.floor(roads / 7) + (tenants > 0 ? 1 : 0)), wantPeds = Math.min(40, Math.floor(tenants / 6) + (tenants > 0 ? 1 : 0));
+    var wantCars = Math.min(140, Math.floor(roads / 6) + (tenants > 0 ? 1 : 0)), wantPeds = Math.min(140, Math.floor(tenants / 5) + (tenants > 0 ? 1 : 0));
     var sig = S.roads.length + ':' + (G.visiting ? 'v' : 'o');
     if (sig !== life.sig) { life.sig = sig; life.cars = life.cars.filter(function (c) { return G.isRoad(c.x, c.y); }); life.peds = life.peds.filter(function (c) { return G.isRoad(c.x, c.y); }); }
     while (life.cars.length < wantCars) spawnOn(life.cars, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.9 + Math.random() * 0.6, col: CARCOL[Math.floor(Math.random() * CARCOL.length)], car: 1 }; });

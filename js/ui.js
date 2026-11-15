@@ -534,6 +534,7 @@
     var h = (MC.Cloud.enabled && friendsOpen() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn two" style="flex:1" data-do="invite"><span>Freunde einladen</span><small>' + (G.S.friends ? G.S.friends + (G.S.friends === 1 ? ' Freund' : ' Freunde') + ' · jetzt ' + G.friendBonus() + ' % mehr Einnahmen' : 'Erster Freund bringt ' + MC.FRIEND_FIRST + ' % mehr Einnahmen') + '</small></button></div>' : '') +
       '<h4>Töne</h4>' + toggle('sndCash', 'Kassieren-Geräusch') + toggle('sound', 'Spiel-Effekte (Bauen, Level, Ziele …)') +
       toggle('music', 'Musik') + toggle('voice', 'Berater-Stimme') +
+      '<h4>Anzeige</h4>' + toggle('daynight', 'Tag und Nacht (echte Uhrzeit)') +
       toggle('ignoreMute', 'Ton auch bei Stummschaltung') +
       (MC.Cloud.enabled ? '<h4>Dein Stadt-Code</h4><div class="codebox">' + esc(MC.Cloud.code) + '</div>' +
         '<div class="row"><button class="btn primary" data-do="copylink">' + (navigator.share ? 'Link teilen' : 'Link kopieren') + '</button><button class="btn ghost" data-do="usecode">Anderen Code eingeben</button></div>' : '') +
@@ -858,6 +859,7 @@
       S[v] = !S[v]; el.classList.toggle('on', S[v]); G.save();
       if (v === 'music') AS.music(S.music);
       if (v === 'ignoreMute') AS.setIgnoreMute(S.ignoreMute);
+      if (v === 'daynight') V.kick();
       if (v === 'sound' && S.sound) UI.sound('built');
       if (v === 'sndCash' && S.sndCash) UI.sound('collect');
       return;
@@ -1202,6 +1204,8 @@
     var t = G.now();
     if (G.S.b.some(function (b) { return b.c && MC.DEF[b.t].kind === 'house' && G.state(b, t) === 'ready' && t > b.c.end + G.grace(b.c) * 0.75; })) tip('tipp_eile');
   }, 4000);
+  // erste Dämmerung: Berater zeigt die Lichter
+  setInterval(function () { if (!document.hidden && (V.light || 0) > 0.35 && !G.inTut() && !G.visiting) tip('tipp_nacht'); }, 5000);
   var playMs = 0, longSaid = false;
   setInterval(function () {
     if (document.hidden || longSaid || G.inTut() || G.visiting || G.S.lvl < 2) return;

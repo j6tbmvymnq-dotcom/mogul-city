@@ -272,6 +272,7 @@
     tipp_deko: 'Deko ist mehr als Schmuck: Jedes Beet und jeder Baum hebt die Miete der Häuser daneben, und mehrere Stücke um ein Haus zählen zusammen. Beim Platzieren siehst du den Bonus.',
     tipp_gewerbe: 'Dein Laden verdient an jedem Bewohner in der Nähe, aber nur, solange dessen Mietvertrag läuft. Halte die Häuser rundherum also vermietet.',
     tipp_pinsel: 'Viele Häuser auf einmal? Tipp unten auf Vermieten, wähl einen Vertrag und wisch einfach über die Häuser. Fällige werden dabei gleich kassiert.',
+    tipp_nacht: 'Die Sonne geht unter, Chef. Schau mal, wie deine Stadt jetzt leuchtet! Bewohnte Häuser machen Licht, leere bleiben dunkel.',
     tipp_ziel: 'Oben links steht immer dein aktuelles Ziel, mit Fortschritt. Tipp drauf, dann siehst du alle Ziele und die Belohnung.',
     tipp_2d: 'Wird es eng? Mit dem Knopf 2D rechts unten legst du alle Gebäude flach hin. So siehst du jede Straße und jedes freie Feld. Mit 3D geht es zurück.',
     tipp_strassenmodus: 'Straßen ziehst du einfach mit dem Finger. Tippst du auf eine vorhandene Straße, verschwindet sie wieder.',
