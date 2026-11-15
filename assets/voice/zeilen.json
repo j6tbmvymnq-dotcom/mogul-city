@@ -133,6 +133,34 @@
    "text": "Noch ein Freund ist dabei! Wieder ein Prozent mehr für deine ganze Stadt."
   },
   {
+   "id": "tipp_vertraege",
+   "text": "Kurz erklärt, Chef: Kurze Verträge bringen pro Stunde am meisten, aber nur, wenn du gleich wieder kassierst. Perfekt für ein paar Minuten zwischendurch, in der Bahn oder auf dem Klo. Lange Verträge zahlen pro Vertrag mehr, pro Stunde aber weniger. Die nimmst du, wenn du länger weg bist, zum Beispiel über Nacht."
+  },
+  {
+   "id": "tipp_lang",
+   "text": "Legst du das Handy gleich weg? Dann gib deinen Häusern jetzt lange Verträge. Sonst verfällt die Miete, bevor du zurück bist."
+  },
+  {
+   "id": "tipp_verfallen",
+   "text": "Autsch, da sind Mieter abgesprungen, weil die Miete zu lange lag. Vor einer längeren Pause also lieber lange Verträge abschließen."
+  },
+  {
+   "id": "tipp_deko",
+   "text": "Deko ist mehr als Schmuck: Jedes Beet und jeder Baum hebt die Miete der Häuser daneben, und mehrere Stücke um ein Haus zählen zusammen. Beim Platzieren siehst du den Bonus."
+  },
+  {
+   "id": "tipp_gewerbe",
+   "text": "Dein Laden verdient an jedem Bewohner in der Nähe, aber nur, solange dessen Mietvertrag läuft. Halte die Häuser rundherum also vermietet."
+  },
+  {
+   "id": "tipp_strasse",
+   "text": "Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben."
+  },
+  {
+   "id": "tipp_sammeln",
+   "text": "Ein Sammelstück! Die findest du ab und zu beim Kassieren. Eine volle Sammlung tauschst du in der Firmenzentrale gegen eine Belohnung ein."
+  },
+  {
    "id": "langer_vertrag",
    "text": "Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich."
   },

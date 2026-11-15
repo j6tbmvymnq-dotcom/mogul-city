@@ -13,7 +13,7 @@
   MC.FRIEND_MAX = 25;      // höchstens +25 % durch Freunde
   MC.FRIEND_FIRST = 5;     // erster Freund: +5 %, jeder weitere +1 %
   MC.FRIEND_PROMPTS = [5, 8, 12];   // Berater werben bei diesen Level-Aufstiegen fürs Einladen (solange kein Freund mitspielt)
-  MC.FRIEND_LVL = 3;       // ein Freund zählt ab diesem Level
+  MC.FRIEND_LVL = 5;       // ein Freund zählt ab diesem Level (= dort, wo er selbst zum Einladen aufgefordert wird)
   // Fahnenmasten auf dem Platz der Freundschaft (Felder, Höhe in px) – gleiche Formel wie tools/svg/freunde.py
   MC.FRIEND_POLES = (function () { var o = []; for (var i = 0; i < 12; i++) { var a = (i + 0.5) * Math.PI / 6; o.push([1 + 0.84 * Math.cos(a), 1 + 0.84 * Math.sin(a)]); } return o; })();  // Tutorial-Bungalow + Kapital für die ersten Ziele (Teststadt: sonst zäher Start)
   MC.START_GOLD = 5;
@@ -260,6 +260,13 @@
     freunde_erinnerung: 'Denk an deine Freunde, Chef! Schon ein einziger Freund bringt dir fünf Prozent mehr auf die ganze Stadt.',
     freund_neu: 'Großartig, dein erster Freund spielt mit! Der Platz der Freundschaft wartet auf dich. Bau ihn gleich!',
     freund_mehr: 'Noch ein Freund ist dabei! Wieder ein Prozent mehr für deine ganze Stadt.',
+    tipp_vertraege: 'Kurz erklärt, Chef: Kurze Verträge bringen pro Stunde am meisten, aber nur, wenn du gleich wieder kassierst. Perfekt für ein paar Minuten zwischendurch, in der Bahn oder auf dem Klo. Lange Verträge zahlen pro Vertrag mehr, pro Stunde aber weniger. Die nimmst du, wenn du länger weg bist, zum Beispiel über Nacht.',
+    tipp_lang: 'Legst du das Handy gleich weg? Dann gib deinen Häusern jetzt lange Verträge. Sonst verfällt die Miete, bevor du zurück bist.',
+    tipp_verfallen: 'Autsch, da sind Mieter abgesprungen, weil die Miete zu lange lag. Vor einer längeren Pause also lieber lange Verträge abschließen.',
+    tipp_deko: 'Deko ist mehr als Schmuck: Jedes Beet und jeder Baum hebt die Miete der Häuser daneben, und mehrere Stücke um ein Haus zählen zusammen. Beim Platzieren siehst du den Bonus.',
+    tipp_gewerbe: 'Dein Laden verdient an jedem Bewohner in der Nähe, aber nur, solange dessen Mietvertrag läuft. Halte die Häuser rundherum also vermietet.',
+    tipp_strasse: 'Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben.',
+    tipp_sammeln: 'Ein Sammelstück! Die findest du ab und zu beim Kassieren. Eine volle Sammlung tauschst du in der Firmenzentrale gegen eine Belohnung ein.',
     langer_vertrag: 'Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich.',
     zurueck: 'Schön, dass du zurück bist, Chef! Schau mal, was in der Zwischenzeit passiert ist.'
   };

@@ -78,6 +78,21 @@
     if (G.S.voice) AS.say(AS.voice(a.id, line));
   };
   $('advisor').addEventListener('click', function () { $('advisor').hidden = true; });
+  // Tipp des Beraters, je Stadt einmal. Mit Stimme sofort; ohne Stimme wartet die Sprechblase, bis kein Fenster mehr offen ist.
+  function tip(key, delay) {
+    var S = G.S;
+    if (S.legacy || G.inTut() || G.visiting || S.seen['tip_' + key] || !MC.VOICE[key]) return false;
+    G.markSeen('tip_' + key);
+    var tries = 0;
+    function go() {
+      if (G.visiting) return;
+      if ((!$('sheet').hidden || modalOpen) && !G.S.voice && tries++ < 240) return setTimeout(go, 500);
+      UI.say(key);
+    }
+    setTimeout(go, delay || 300);   // erst nach dem Öffnen eines Fensters prüfen (das blendet die Blase sonst gleich wieder aus)
+    return true;
+  }
+  UI.tip = tip;
 
   UI.toast = function (msg, err, img) {
     var d = document.createElement('div');
@@ -273,6 +288,7 @@
   function openShop(tab) {
     shopTab = tab || shopTab;
     if (!tabUnlocked(shopTab)) shopTab = 'house';
+    if (shopTab === 'deco') tip('tipp_deko');
     var S = G.S, h = '<div class="tabs">', teasers = 0, seenNow = [];
     MC.KINDS.forEach(function (k) {
       if (!tabUnlocked(k.id)) return;
@@ -350,6 +366,7 @@
   function buildingSig(b) { return b.id + ':' + G.state(b) + ':' + (b.c ? b.c.k : '') + ':' + G.S.lvl; }
   function openBuilding(b) {
     var d = MC.DEF[b.t], st = G.state(b), h = '', chips = [chip(KIND[d.kind])];
+    if (d.kind === 'house' && (st === 'empty' || st === 'expired') && !G.visiting) tip('tipp_vertraege', 500);
     if (d.gold) chips.push(chip('Premium', 'y'));
     if (st === 'build') {
       var p = G.finishPrice(b);
@@ -497,18 +514,13 @@
   function openMenu() {
     var h = (MC.Cloud.enabled && !G.inTut() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn" style="flex:1" data-do="invite">Freunde einladen' + (G.S.friends ? ' (' + G.S.friends + ')' : ' – +' + MC.FRIEND_FIRST + ' %') + '</button></div>' : '') +
       toggle('sound', 'Soundeffekte') + toggle('music', 'Musik') + toggle('voice', 'Berater-Stimme') +
-      toggle('ignoreMute', 'Ton auch bei Stummschaltung (iPhone/iPad)') +
-      '<div class="next" style="margin:-4px 2px 8px">Aus: Das Spiel folgt dem Stummschalter und lässt deine eigene Musik weiterlaufen.</div>' +
-      '<h4>Als App auf den Home-Bildschirm</h4><div class="note">In Safari auf <b>Teilen</b> tippen und <b>„Zum Home-Bildschirm“</b> wählen. Danach startet Mogul City im Vollbild und läuft auch ohne Internet.</div>' +
-      '<h4>So funktioniert das Spiel</h4><div class="next">Häuser bauen, Mietvertrag abschließen, Miete rechtzeitig kassieren. Kurze Verträge lohnen sich, wenn du oft reinschaust – lange, wenn du weg bist. Wer zu spät kassiert, verliert die Miete.</div>' +
-      '<div class="next">Deko erhöht die Miete der Häuser im Umkreis. Gewerbe verdient an jedem Bewohner im Einzugsgebiet. Weltwunder wirken auf die ganze Stadt.</div>' +
-      (MC.Cloud.enabled ? '<h4>Cloud-Spielstand</h4><div class="note">Mit diesem Code spielst du auf jedem Gerät weiter. Am besten den Link öffnen und dann „Zum Home-Bildschirm“ wählen.' +
-        '<div class="codebox">' + esc(MC.Cloud.code) + '</div>Status: <b data-cloud>' + esc(MC.Cloud.status) + '</b><br><span style="opacity:.7">Testphase: Spielfortschritt (Level, Ziele, Tutorial) wird pro Stadt ausgewertet, um das Spiel zu verbessern.</span></div>' +
+      toggle('ignoreMute', 'Ton auch bei Stummschaltung') +
+      (MC.Cloud.enabled ? '<h4>Dein Stadt-Code</h4><div class="codebox">' + esc(MC.Cloud.code) + '</div>' +
         '<div class="row"><button class="btn primary" data-do="copylink">' + (navigator.share ? 'Link teilen' : 'Link kopieren') + '</button><button class="btn ghost" data-do="usecode">Anderen Code eingeben</button></div>' : '') +
       '<h4>Spielstand</h4><div class="row"><button class="btn ghost" data-do="export">Sichern</button><button class="btn ghost" data-do="import">Wiederherstellen</button></div>' +
       '<div class="row" style="margin-top:8px"><button class="btn primary" data-do="ranking">Bestenliste</button><button class="btn ghost" data-do="advisor">Berater wechseln</button><button class="btn danger" data-do="reset">Neu anfangen</button></div>' +
       '<h4>Updates</h4><div class="row"><button class="btn ghost" data-do="update">Nach Update suchen</button></div>' +
-      '<div class="next" style="margin-top:10px">Mogul City · Version 0.4' + (G.S.test ? ' · Teststadt' : '') + (AS.manifest.version ? ' · Assets ' + esc(AS.manifest.version) : '') + '</div>';
+      '<div class="next" style="margin-top:10px">Mogul City · Version 0.5 · <span data-cloud>' + esc(MC.Cloud.status) + '</span>' + (G.S.test ? ' · Teststadt' : '') + ' · Testphase: Spielfortschritt wird ausgewertet' + (AS.manifest.version ? ' · Assets ' + esc(AS.manifest.version) : '') + '</div>';
     openSheet('Menü', h, { type: 'menu' });
   }
 
@@ -993,7 +1005,7 @@
         hud();
       }
     });
-    setTimeout(function () { UI.say('zurueck'); }, 300);
+    setTimeout(function () { if (!(expired && tip('tipp_verfallen'))) UI.say('zurueck'); }, 300);
   }
 
   // ---------- Start ----------
@@ -1009,6 +1021,9 @@
   });
   G.on(function (type, d) {
     if (type === 'levelup') MC.Cloud.track('level', d.lvl, 'level_' + d.lvl);
+    if (type === 'built' && MC.DEF[d.b.t].kind === 'shop') setTimeout(function () { tip('tipp_gewerbe'); }, 1500);
+    if (type === 'build') { var bd = MC.DEF[d.b.t]; if ((bd.kind === 'house' || bd.kind === 'shop') && !G.touchesRoad(bd, d.b.x, d.b.y)) setTimeout(function () { tip('tipp_strasse'); }, 600); }
+    if (type === 'found') setTimeout(function () { tip('tipp_sammeln'); }, 1200);
     if (type === 'mission' && !G.visiting) MC.Cloud.track('ziel', G.S.mission, 'ziel_' + G.S.mission);
     if (type === 'land' && !G.visiting) MC.Cloud.track('land', G.S.land.length, 'land_' + G.S.land.length);
     if (type === 'visit') {
@@ -1105,7 +1120,19 @@
     }
   });
   // Tipp vor dem Gehen: nach 10 Minuten Spielzeit einmal pro Sitzung
-  setTimeout(function () { if (!G.inTut() && G.S.lvl >= 2 && !document.hidden) UI.say('langer_vertrag'); }, 10 * MC.MIN);
+  // Gegen Ende einer Sitzung an lange Verträge erinnern: erste Sitzung nach 12 Min. Spielzeit (ausführlich), später nach 20 Min. (kurz),
+  // nur wenn gerade kurze Verträge laufen – genau dann würde die Miete in einer Pause verfallen
+  var playMs = 0, longSaid = false;
+  setInterval(function () {
+    if (document.hidden || longSaid || G.inTut() || G.visiting || G.S.lvl < 2) return;
+    playMs += 5000;
+    var first = (G.S.sessions || 1) <= 1, need = (first ? 12 : 20) * MC.MIN;
+    if (playMs < need || modalOpen || V.mode !== 'idle') return;
+    var shortRunning = G.S.b.some(function (b) { return b.c && MC.DEF[b.t].kind === 'house' && (b.c.end - b.c.s) <= 30 * MC.MIN && G.state(b) === 'running'; });
+    if (!shortRunning) return;
+    longSaid = true;
+    if (!tip('tipp_lang')) UI.say('langer_vertrag');
+  }, 5000);
 
   AS.load().then(function () {
     applyUiAssets();
