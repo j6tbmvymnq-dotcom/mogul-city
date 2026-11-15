@@ -317,7 +317,7 @@
       if ((d.friend ? (tabUnlocked('wonder') ? 'wonder' : 'deco') : d.kind) !== shopTab) return;
       var lock = (d.lvl > S.lvl && !S.legacy) || !G.kindUnlocked(d), own = d.kind === 'wonder' && G.count(d.id) > 0;
       if (d.friend && lock) {
-        if (!MC.Cloud.enabled || G.inTut()) return;
+        if (!MC.Cloud.enabled || G.inTut() || !friendsOpen()) return;
         h += '<button class="item teaser friend" data-do="invite"><img src="' + A.url(d.id) + '" alt=""><span class="nm">' + esc(d.name) + '</span><span class="st">Erster Freund: +' + MC.FRIEND_FIRST + ' % auf alles</span><span class="pr">Freund einladen</span></button>';
         return;
       }
@@ -529,7 +529,7 @@
 
   function toggle(key, label) { return '<button class="check' + (G.S[key] ? ' on' : '') + '" data-tog="' + key + '"><i></i>' + label + '</button>'; }
   function openMenu() {
-    var h = (MC.Cloud.enabled && !G.inTut() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn two" style="flex:1" data-do="invite"><span>Freunde einladen</span><small>' + (G.S.friends ? G.S.friends + (G.S.friends === 1 ? ' Freund' : ' Freunde') + ' · jetzt ' + G.friendBonus() + ' % mehr Einnahmen' : 'Erster Freund bringt ' + MC.FRIEND_FIRST + ' % mehr Einnahmen') + '</small></button></div>' : '') +
+    var h = (MC.Cloud.enabled && friendsOpen() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn two" style="flex:1" data-do="invite"><span>Freunde einladen</span><small>' + (G.S.friends ? G.S.friends + (G.S.friends === 1 ? ' Freund' : ' Freunde') + ' · jetzt ' + G.friendBonus() + ' % mehr Einnahmen' : 'Erster Freund bringt ' + MC.FRIEND_FIRST + ' % mehr Einnahmen') + '</small></button></div>' : '') +
       '<h4>Töne</h4>' + toggle('sndCash', 'Kassieren-Geräusch') + toggle('sound', 'Spiel-Effekte (Bauen, Level, Ziele …)') +
       toggle('music', 'Musik') + toggle('voice', 'Berater-Stimme') +
       toggle('ignoreMute', 'Ton auch bei Stummschaltung') +
@@ -662,6 +662,8 @@
       MC.Cloud.track('einladen_hinweis', lvl, 'inv_' + lvl);
     }, delay);
   }
+  // Einladen erst zeigen, wenn die Spieler das Spiel kennen (ab dem ersten Berater-Hinweis, Level 5) oder schon Freunde haben
+  function friendsOpen() { var S = G.S; return !G.inTut() && (S.legacy || (S.friends || 0) > 0 || S.lvl >= MC.FRIEND_PROMPTS[0]); }
   function friendPerks() {
     return '<div class="perks"><div><b>1. Freund</b><span>Platz der Freundschaft + ' + MC.FRIEND_FIRST + ' % auf alle Mieten und Läden</span></div>' +
       '<div><b>Jeder weitere</b><span>+1 % obendrauf (bis ' + MC.FRIEND_MAX + ' %)</span></div>' +
