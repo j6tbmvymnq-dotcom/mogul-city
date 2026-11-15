@@ -288,6 +288,9 @@
 
   function tap(sx, sy) {
     var t = toTile(sx, sy), tx = Math.floor(t.fx), ty = Math.floor(t.fy);
+    // Ein offenes Fenster schließt der erste Tipp daneben – ohne auf der Karte etwas auszulösen
+    var sh = document.getElementById('sheet');
+    if (sh && !sh.hidden && V.mode !== 'place') { MC.UI.closeSheet(); return; }
     if (V.mode === 'place') { setGhost(t.fx, t.fy); return; }
     if (V.mode === 'road') {
       var cur = G.at(tx, ty);
