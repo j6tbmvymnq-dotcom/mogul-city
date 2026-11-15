@@ -5,7 +5,9 @@
   'use strict';
   var MC = window.MC, G = MC.G;
   var cfg = (window.MC_CONFIG && window.MC_CONFIG.cloud) || {};
-  var CL = MC.Cloud = { enabled: !!(cfg.url && cfg.key), code: '', status: 'aus', last: 0, first: Promise.resolve() };
+  // Automatisierte Browser (Tests) sprechen nie mit dem echten Server – außer ausdrücklich mit ?cloudtest=1
+  var robot = navigator.webdriver === true && !/[?&]cloudtest=1/.test(location.search);
+  var CL = MC.Cloud = { enabled: !!(cfg.url && cfg.key) && !robot, code: '', status: 'aus', last: 0, first: Promise.resolve() };
   // ?test=1 markiert die Stadt dauerhaft als Teststadt (nicht in Bestenliste und Statistik), ?test=0 hebt das auf
   var TEST = (/[?&]test=([01])/.exec(location.search) || [])[1];
   function markTest() { if (TEST === '1' && !G.S.test) { G.S.test = 1; G.save(); } else if (TEST === '0' && G.S.test) { delete G.S.test; G.save(); } }
