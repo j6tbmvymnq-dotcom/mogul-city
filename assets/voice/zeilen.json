@@ -153,6 +153,10 @@
    "text": "Dein Laden verdient an jedem Bewohner in der Nähe, aber nur, solange dessen Mietvertrag läuft. Halte die Häuser rundherum also vermietet."
   },
   {
+   "id": "tipp_pinsel",
+   "text": "Viele Häuser auf einmal? Tipp unten auf Vermieten, wähl einen Vertrag und wisch einfach über die Häuser. Fällige werden dabei gleich kassiert."
+  },
+  {
    "id": "tipp_strasse",
    "text": "Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben."
   },

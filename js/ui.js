@@ -159,7 +159,7 @@
   }
 
   // ---------- Freischaltungen: Werkzeuge ein-/ausblenden, „Neu“-Abzeichen, nächste Freischaltung ----------
-  var TOOL_FEATURE = { move: 'move', bulldoze: 'bulldoze', collect: 'collectall' };
+  var TOOL_FEATURE = { move: 'move', bulldoze: 'bulldoze', lease: 'lease', collect: 'collectall' };
   var featSig = '';
   function shopHasNew() {
     if (G.inTut()) return false;
@@ -191,7 +191,7 @@
     if (on && !t) el.insertAdjacentHTML('beforeend', '<i class="newtag">NEU</i>');
     if (!on && t) t.parentNode.removeChild(t);
   }
-  var FEAT_NAME = { deko: 'Deko', gewerbe: 'Gewerbe', move: 'Umsetzen', bulldoze: 'Abriss', collectall: 'Alles kassieren', daily: 'Tagesbonus', land: 'Grundstücke kaufen', sets: 'Sammlungen', wonder: 'Weltwunder', goldex: 'Gold-Tausch', premium: 'Premium-Gebäude' };
+  var FEAT_NAME = { deko: 'Deko', gewerbe: 'Gewerbe', move: 'Umsetzen', bulldoze: 'Abriss', lease: 'Vermieten', collectall: 'Alles kassieren', daily: 'Tagesbonus', land: 'Grundstücke kaufen', sets: 'Sammlungen', wonder: 'Weltwunder', goldex: 'Gold-Tausch', premium: 'Premium-Gebäude' };
   function num(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
   // „noch 11.033 XP bis Level 30“ – bei mehreren Leveln bis zur Freischaltung zusätzlich die Gesamtsumme
   function xpTo(L) {
@@ -237,14 +237,14 @@
     $('banner').hidden = m === 'idle';
     var txt = { road: 'Straße: tippen oder ziehen. Tippen auf eine Straße entfernt sie.', bulldoze: 'Abriss: Gebäude oder Straße antippen.' }[m];
     if (m === 'sign' && brush) txt = esc(MC.CONTRACT[brush.cid].name) + ': Häuser antippen oder darüberwischen. Fällige werden gleich kassiert.';
-    if (m === 'idle' && brush) { if (brush.n > 1) UI.toast(brush.n + ' Häuser vermietet: ' + MC.CONTRACT[brush.cid].name); brush = null; }
+    if (m === 'idle' && brush) { if (brush.n > 0) UI.toast(brush.n + ' Häuser vermietet: ' + MC.CONTRACT[brush.cid].name); brush = null; }
     if (place) txt = esc(V.ghost.def.name) + (V.ghost.moving ? ' umsetzen' : '') + ': Karte antippen oder ziehen.' +
       (V.ghost.moving && V.ghost.moving.c ? ' Der Mietvertrag startet danach neu.' : '');
     $('bannerText').removeAttribute('data-h');
     if (m === 'move') moveBanner(); else $('bannerText').innerHTML = txt || '';
     $('bannerDone').hidden = place;
     var btns = document.querySelectorAll('#bar button');
-    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-act') === m);
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-act') === (m === 'sign' ? 'lease' : m));
     if (m !== 'idle') closeSheet(true);
     UI.ghostMoved();
   };
@@ -775,6 +775,25 @@
     if (broke) UI.toast(broke + (broke === 1 ? ' Haus bleibt' : ' Häuser bleiben') + ' leer – das Geld reichte nicht für alle Gebühren.', true);
     closeSheet(true); hud();
   }
+  // Werkzeug Vermieten: Vertrag wählen, dann Pinsel (Häuser antippen oder darüberwischen)
+  function openLease() {
+    var S = G.S, t = G.now(), empty = 0, ready = 0, sample = null;
+    S.b.forEach(function (b) { if (MC.DEF[b.t].kind !== 'house') return; var st = G.state(b, t); if (st === 'empty' || st === 'expired') empty++; else if (st === 'ready') ready++; if (!sample || MC.DEF[b.t].rent < MC.DEF[sample.t].rent) sample = b; });
+    if (!sample) return UI.toast('Bau zuerst ein Haus.', true);
+    var h = '<div class="next" style="margin-bottom:8px">' + empty + ' frei · ' + ready + ' fällig – Vertrag wählen, dann über die Häuser wischen</div><div class="list">';
+    MC.CONTRACTS.slice().sort(function (a, c) { return a.dur - c.dur; }).forEach(function (c) {
+      if (c.lvl > S.lvl && !S.legacy) return;
+      var o = G.offer(sample, c);
+      h += '<button class="contract" data-lease="' + c.id + '"><span class="t">' + esc(c.name) + '<small>' + MC.durShort(c.dur) + '</small></span>' +
+        '<span class="p">+' + MC.money(o.pay) + '<small>Gebühr ' + MC.money(o.cost) + '</small></span>' +
+        '<span class="m">Beträge für einen ' + esc(MC.DEF[sample.t].name) + ' · verfällt nach ' + MC.durShort(G.grace({ k: c.id })) + '</span></button>';
+    });
+    openSheet('Vermieten', h + '</div>', { type: 'lease' });
+  }
+  function startBrush(cid) {
+    brush = { cid: cid, n: 0, broke: false };
+    closeSheet(true); V.setMode('sign');
+  }
   // Vermieten-Pinsel: ein Haus antippen/überwischen -> fällige Miete kassieren und neu vermieten, leere Häuser vermieten
   var brush = null, brushNext = false;
   UI.brushSign = function (b) {
@@ -801,7 +820,7 @@
   $('sheetBody').addEventListener('click', function (e) {
     var rk = e.target.closest('[data-rank]');
     if (rk && cur && cur.list) { var rc = cur.list[+rk.getAttribute('data-rank')]; if (!rc.me) { UI.sound('tap'); visit(rc); } return; }
-    var el = e.target.closest('[data-tab],[data-build],[data-sign],[data-do],[data-tog],[data-set]'); if (!el) return;
+    var el = e.target.closest('[data-tab],[data-build],[data-sign],[data-lease],[data-do],[data-tog],[data-set]'); if (!el) return;
     var S = G.S, b = cur && cur.type === 'b' ? G.get(cur.id) : null, v;
     UI.sound('tap');
     if ((v = el.getAttribute('data-tab'))) return openShop(v);
@@ -815,6 +834,7 @@
       return V.setMode('place', { def: d });
     }
     if ((v = el.getAttribute('data-sign'))) return b && signContract(b, v);
+    if ((v = el.getAttribute('data-lease'))) { UI.sound('tap'); return startBrush(v); }
     if ((v = el.getAttribute('data-tog'))) {
       S[v] = !S[v]; el.classList.toggle('on', S[v]); G.save();
       if (v === 'music') AS.music(S.music);
@@ -915,6 +935,7 @@
     if (TOOL_FEATURE[a]) G.markSeen('tool_' + a);
     if (a === 'shop') { if (V.mode !== 'idle') V.setMode('idle'); openShop(); }
     else if (a === 'missions') { if (V.mode !== 'idle') V.setMode('idle'); openMissions(); }
+    else if (a === 'lease') { if (V.mode === 'sign') V.setMode('idle'); else { if (V.mode !== 'idle') V.setMode('idle'); openLease(); } }
     else if (a === 'collect') {
       var r = G.collectAll();
       if (r.n) { UI.toast(r.n + ' × kassiert: +' + MC.money(r.cash)); UI.sound(r.n > 1 ? 'collect_all' : 'collect'); }
@@ -1052,6 +1073,11 @@
     if (type === 'built' && MC.DEF[d.b.t].kind === 'shop') setTimeout(function () { tip('tipp_gewerbe'); }, 1500);
     if (type === 'build') { var bd = MC.DEF[d.b.t]; if ((bd.kind === 'house' || bd.kind === 'shop') && !G.touchesRoad(bd, d.b.x, d.b.y)) setTimeout(function () { tip('tipp_strasse'); }, 600); }
     if (type === 'found') setTimeout(function () { tip('tipp_sammeln'); }, 1200);
+    if ((type === 'collect' || type === 'expire' || type === 'built') && G.unlocked('lease') && !G.S.seen.tip_tipp_pinsel) {
+      var many = 0, tt = G.now();
+      G.S.b.forEach(function (x) { if (MC.DEF[x.t].kind === 'house') { var s2 = G.state(x, tt); if (s2 === 'empty' || s2 === 'expired' || s2 === 'ready') many++; } });
+      if (many >= 3) setTimeout(function () { tip('tipp_pinsel'); var lb = document.querySelector('[data-act=lease]'); if (lb) { lb.classList.add('pulse'); setTimeout(function () { lb.classList.remove('pulse'); }, 6000); } }, 800);
+    }
     if (type === 'mission' && !G.visiting) MC.Cloud.track('ziel', G.S.mission, 'ziel_' + G.S.mission);
     if (type === 'land' && !G.visiting) MC.Cloud.track('land', G.S.land.length, 'land_' + G.S.land.length);
     if (type === 'visit') {

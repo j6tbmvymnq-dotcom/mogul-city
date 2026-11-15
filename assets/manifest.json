@@ -1,5 +1,5 @@
 {
- "version": "99377176",
+ "version": "f659a266",
  "sprites": {
   "hq": "hq.svg",
   "bungalow": "bungalow.svg",
@@ -186,6 +186,7 @@
    "tipp_verfallen": "tipp_verfallen.mp3",
    "tipp_deko": "tipp_deko.mp3",
    "tipp_gewerbe": "tipp_gewerbe.mp3",
+   "tipp_pinsel": "tipp_pinsel.mp3",
    "tipp_strasse": "tipp_strasse.mp3",
    "tipp_sammeln": "tipp_sammeln.mp3",
    "langer_vertrag": "langer_vertrag.mp3",
@@ -256,6 +257,7 @@
    "tipp_verfallen": "tipp_verfallen.mp3",
    "tipp_deko": "tipp_deko.mp3",
    "tipp_gewerbe": "tipp_gewerbe.mp3",
+   "tipp_pinsel": "tipp_pinsel.mp3",
    "tipp_strasse": "tipp_strasse.mp3",
    "tipp_sammeln": "tipp_sammeln.mp3",
    "langer_vertrag": "langer_vertrag.mp3",

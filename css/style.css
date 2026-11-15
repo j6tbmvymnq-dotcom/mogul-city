@@ -62,7 +62,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--red);
   color: #fff; font-size: 11px; font-weight: 800; font-style: normal; display: grid; place-items: center; border: 2px solid var(--navy); }
 .dot { position: absolute; top: 4px; right: 8px; width: 11px; height: 11px; border-radius: 50%; background: #3ddc74; border: 2px solid var(--navy); }
-@media (max-width: 380px) { #bar button { width: 51px; } }
+@media (max-width: 380px) { #bar button { width: 51px; font-size: 9.6px; } }
 
 #placebar { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--sb) + 14px); display: flex; gap: 10px; width: min(440px, calc(100% - 24px)); }
 #placebar .btn { flex: 1; height: 54px; font-size: 16px; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }

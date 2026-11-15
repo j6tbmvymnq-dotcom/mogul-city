@@ -155,6 +155,7 @@
     gewerbe: 2,     // Laden-Reiter Gewerbe
     move: 3,        // Werkzeug Umsetzen
     bulldoze: 3,    // Werkzeug Abriss
+    lease: 3,       // Werkzeug Vermieten (Vertrag wählen, über Häuser wischen)
     collectall: 4,  // Knopf „Kassieren“ für alles
     daily: 4,       // Tagesbonus (zusätzlich erst ab der 2. Sitzung)
     land: 5,        // Grundstücke kaufen
@@ -265,6 +266,7 @@
     tipp_verfallen: 'Autsch, da sind Mieter abgesprungen, weil die Miete zu lange lag. Vor einer längeren Pause also lieber lange Verträge abschließen.',
     tipp_deko: 'Deko ist mehr als Schmuck: Jedes Beet und jeder Baum hebt die Miete der Häuser daneben, und mehrere Stücke um ein Haus zählen zusammen. Beim Platzieren siehst du den Bonus.',
     tipp_gewerbe: 'Dein Laden verdient an jedem Bewohner in der Nähe, aber nur, solange dessen Mietvertrag läuft. Halte die Häuser rundherum also vermietet.',
+    tipp_pinsel: 'Viele Häuser auf einmal? Tipp unten auf Vermieten, wähl einen Vertrag und wisch einfach über die Häuser. Fällige werden dabei gleich kassiert.',
     tipp_strasse: 'Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben.',
     tipp_sammeln: 'Ein Sammelstück! Die findest du ab und zu beim Kassieren. Eine volle Sammlung tauschst du in der Firmenzentrale gegen eine Belohnung ein.',
     langer_vertrag: 'Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich.',
