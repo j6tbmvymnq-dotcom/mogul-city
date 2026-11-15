@@ -105,8 +105,30 @@
     $('missionDot').hidden = !done;
     if (done && missionWasDone === false) { UI.toast('Ziel erreicht: ' + m.m.t); UI.sound('mission'); UI.say('ziel_fertig'); }
     missionWasDone = done;
+    goalBox(m);
     if (V.mode === 'move') moveBanner();
     features();
+  }
+
+  // ---------- Aktuelles Ziel dauerhaft oben links (mit Fortschritt, Tippen öffnet die Ziele) ----------
+  function goalShort(m) {
+    if (m.waiting) return m.m.t;
+    var d = String(m.m.d || m.m.t).split(/\.\s|\s[–-]\s|:\s/)[0].replace(/\.$/, '');
+    return d.length > 64 ? m.m.t : d;
+  }
+  function progText(m) {
+    var pct = /Deko-Bonus/.test(m.m.d || '') ? ' %' : '';
+    return (m.need > 9999 ? MC.short(Math.min(m.have, m.need)) + ' / ' + MC.short(m.need) : Math.min(m.have, m.need) + ' / ' + m.need) + pct;
+  }
+  function goalBox(m) {
+    var box = $('goal'); if (!box) return;
+    var show = !!m && !G.inTut() && !G.visiting && V.mode === 'idle' && !G.S.legacy;
+    box.hidden = !show; if (!show) return;
+    var done = !!m.done;
+    box.classList.toggle('done', done);
+    $('goalT').textContent = done ? 'Ziel erreicht – Belohnung abholen' : goalShort(m);
+    $('goalFill').style.width = Math.max(4, Math.min(100, 100 * m.have / m.need)) + '%';
+    $('goalN').textContent = done ? '' : progText(m);
   }
 
   // ---------- Freischaltungen: Werkzeuge ein-/ausblenden, „Neu“-Abzeichen, nächste Freischaltung ----------
@@ -182,6 +204,7 @@
   }
   UI.modeChanged = function () {
     var m = V.mode, place = m === 'place';
+    goalBox(G.mission());
     if (m !== 'idle') $('advisor').hidden = true;
     $('bar').hidden = place; $('placebar').hidden = !place;
     $('banner').hidden = m === 'idle';
@@ -256,14 +279,14 @@
           '<span class="pr">Ab Level ' + Math.max(d.lvl, d.gold ? MC.FEATURES.premium : 0) + '</span></button>';
         return;
       }
-      var poor = !own && (S.cash < d.cost || S.gold < (d.gold || 0));
+      var blk = G.shopBlocked(d), poor = !own && (blk || S.cash < d.cost || S.gold < (d.gold || 0));
       var nw = G.isNew('b_' + d.id) && d.lvl > 1 && !G.inTut() && !S.legacy;
       seenNow.push('b_' + d.id);
       h += '<button class="item' + (poor ? ' poor' : '') + (own ? ' own' : '') + (d.gold ? ' prem' : '') + '" data-build="' + d.id + '">' +
         (d.gold ? '<span class="premtag">Premium</span>' : '') + (nw ? '<i class="newtag">NEU</i>' : '') +
         '<img src="' + A.url(d.id) + '" alt=""><span class="nm">' + esc(d.name) + '</span><span class="st">' + esc(statLine(d)) +
         (d.build ? '<br>Bauzeit ' + MC.dur(d.build) : '') + '</span>' +
-        '<span class="pr">' + (own ? 'Gebaut' : (d.gold ? GOLD + ' ' : '') + price(d)) + '</span></button>';
+        '<span class="pr">' + (own ? 'Gebaut' : blk ? 'Ab ' + G.SHOP_HOUSES + ' Häusern' : (d.gold ? GOLD + ' ' : '') + price(d)) + '</span></button>';
     });
     openSheet('Bauen', h + '</div>', { type: 'shop', id: shopTab });
     // gesehen: Abzeichen verschwinden beim nächsten Öffnen
@@ -644,6 +667,8 @@
       var d = MC.DEF[v];
       if (d.lvl > S.lvl) return UI.toast(d.name + ' gibt es ab Level ' + d.lvl + '.', true);
       if (d.kind === 'wonder' && G.count(v) > 0) return UI.toast('Jedes Weltwunder gibt es nur einmal.', true);
+      var miss = G.shopBlocked(d);
+      if (miss) return UI.toast('Erst ' + miss + ' ' + (miss === 1 ? 'Haus' : 'Häuser') + ' mehr bauen: Gewerbe verdient an Bewohnern – ab ' + G.SHOP_HOUSES + ' Häusern lohnt es sich.', true);
       if (S.cash < d.cost || S.gold < (d.gold || 0)) return noMoney(d);
       return V.setMode('place', { def: d });
     }
@@ -770,6 +795,7 @@
     if (ng && !ng.moving && (G.S.cash < ng.def.cost || G.S.gold < (ng.def.gold || 0))) { V.setMode('idle'); UI.toast('Das Geld reicht nicht für ein weiteres Stück.'); }
   });
   $('menuBtn').addEventListener('click', function () { UI.sound('tap'); openMenu(); });
+  $('goal').addEventListener('click', function () { UI.sound('tap'); if (V.mode !== 'idle') V.setMode('idle'); openMissions(); });
   $('lvlBox').addEventListener('click', function () { UI.sound('tap'); openBuilding(G.S.b[0]); });
 
   // UI-Symbole aus Assets (ui_*, hud_*), sonst bleiben die eingebauten
@@ -927,6 +953,15 @@
     }
   }
   var started = false, waited = false;
+  // Starthilfe (G.startAid): einmal, sobald jemand vor Level 6 festhängt
+  setInterval(function () {
+    if (!started || modalOpen || V.mode !== 'idle' || document.body.classList.contains('gated') || !G.startAidDue()) return;
+    var a = G.startAidDue();
+    modal(advisorPic(G.advisor(), 'big') + '<h2>Starthilfe</h2><p>Für dein nächstes Haus fehlt dir noch etwas Geld. Ich lege dir ' + MC.money(a) + ' dazu – bau damit einen Bungalow, dann läuft es von selbst.</p>' +
+      '<div class="row"><button class="btn goldbtn" data-m="ok">Danke!</button></div>', {
+      ok: function () { if (G.startAid()) { UI.sound('daily'); hud(); MC.Cloud.track('starthilfe', a, 'starthilfe'); } }
+    });
+  }, 3000);
   function gate() {
     MC.Cloud.first.then(function () { return MC.Cloud.push(); }).catch(function () { }).then(function () {
       MC.Install.pinCode(MC.Cloud.code);

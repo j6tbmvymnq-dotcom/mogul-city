@@ -301,3 +301,22 @@ body.gated #hud, body.gated #bar, body.gated #advisor, body.gated #banner, body.
 html.vpfix, html.vpfix body { height: var(--fullh); }
 html.vpfix body { position: absolute; top: 0; left: 0; right: 0; bottom: auto; }
 html.vpfix #splash, html.vpfix #install { position: absolute; }
+#menuBtn { margin-left: auto; }
+
+/* ---------- Aktuelles Ziel (oben links) ---------- */
+#goal { position: absolute; top: calc(var(--st) + 56px); left: calc(var(--sl) + 8px); max-width: min(300px, calc(100% - 16px));
+  display: flex; gap: 9px; align-items: center; text-align: left; pointer-events: auto; color: #fff;
+  background: rgba(22, 35, 59, .9); border-radius: 14px; padding: 7px 12px 8px 7px; box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+#goal .gic { flex: none; width: 30px; height: 30px; border-radius: 9px; background: rgba(242, 182, 50, .18); color: var(--gold); display: grid; place-items: center; }
+#goal .gic svg { width: 20px; height: 20px; }
+#goal .gt { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+#goal b { font-size: 13px; line-height: 1.25; font-weight: 700; }
+#goal .grow { display: flex; align-items: center; gap: 8px; }
+#goal .gbar { flex: 1; min-width: 70px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .16); overflow: hidden; }
+#goal .gbar i { display: block; height: 100%; width: 4%; border-radius: 3px; background: linear-gradient(90deg, #ffd96a, #f2b632); transition: width .4s; }
+#goal #goalN { font-size: 12px; font-weight: 700; opacity: .8; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#goal.done { background: linear-gradient(#ffd96a, #e9a516); color: #4a3200; animation: pulse 1.6s infinite; }
+#goal.done .gic { background: rgba(255, 255, 255, .45); color: #7a5200; }
+#goal.done .gbar { display: none; }
+body.gated #goal, body.visiting #goal { display: none !important; }

@@ -337,11 +337,32 @@
     return G.hasRoad({ t: def.id, x: x, y: y });
   };
 
+  // Einmalige Starthilfe: wer vor Level 6 mit weniger als 3 Häusern kein Geld mehr für einen Bungalow hat
+  // (z. B. weil das Geld früh in Gewerbe oder Deko floss), bekommt den Fehlbetrag einmal geschenkt.
+  G.startAidDue = function () {
+    if (S.legacy || S.startAid || G.visiting || G.inTut() || S.lvl >= MC.TUT.rushLevel) return 0;
+    var n = 0; S.b.forEach(function (b) { if (MC.DEF[b.t].kind === 'house') n++; });
+    var need = MC.DEF.bungalow.cost;
+    return n < G.SHOP_HOUSES && S.cash < need ? Math.ceil((need - S.cash) / 1000) * 1000 : 0;
+  };
+  G.startAid = function () {
+    var a = G.startAidDue(); if (!a) return 0;
+    S.cash += a; S.startAid = a; emit('cash'); G.save();
+    return a;
+  };
+  // Gewerbe erst ab 3 Häusern: vorher hat es kaum Kunden, und das Geld fehlt für Häuser (Hänger auf Level 3)
+  G.SHOP_HOUSES = 3;
+  G.shopBlocked = function (d) {
+    if (d.kind !== 'shop' || S.legacy || G.visiting) return false;
+    var n = 0; S.b.forEach(function (b) { if (MC.DEF[b.t].kind === 'house') n++; });
+    return n < G.SHOP_HOUSES ? G.SHOP_HOUSES - n : false;
+  };
   G.build = function (id, x, y) {
     var d = MC.DEF[id];
     if (!d || d.kind === 'hq') return 'Nicht baubar.';
     if (d.lvl > S.lvl && !S.legacy) return 'Erst ab Level ' + d.lvl + '.';
     if (!G.kindUnlocked(d)) return 'Noch nicht freigeschaltet.';
+    if (G.shopBlocked(d)) return 'Gewerbe lohnt sich erst ab ' + G.SHOP_HOUSES + ' Häusern.';
     if (d.kind === 'wonder' && G.count(id) > 0) return 'Jedes Weltwunder gibt es nur einmal.';
     if (!G.canPlace(d, x, y)) return 'Hier ist kein Platz.';
     if (S.gold < (d.gold || 0)) return 'Nicht genug Gold.';
