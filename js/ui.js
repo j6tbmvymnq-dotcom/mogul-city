@@ -412,7 +412,7 @@
       }
       h += (footer(b, d) ? '<h4>Sonstiges</h4>' + footer(b, d) : '');
     } else if (d.kind === 'shop') {
-      var cu = G.customers(b), inc = G.shopIncome(b);
+      var cu = G.customers(b), inc = G.shopIncome(b), nc = G.shopCycles(b);
       chips.push(chip('Radius ' + d.reach)); chips.push(chip(d.per + ' $ je Kunde'));
       h = hero(d, chips);
       if (st === 'noroad') h += '<div class="note">Kein Straßenanschluss. Ohne Straße kommt keine Kundschaft.</div>';
@@ -420,7 +420,9 @@
         if (cu === 0) h += '<div class="note">Keine Kunden. Im blauen Einzugsgebiet muss mindestens ein Haus mit laufendem Mietvertrag stehen.</div>';
         h += '<div class="stats"><div class="stat"><b>' + cu + '</b><span>Kunden im Gebiet</span></div>' +
           '<div class="stat"><b>' + MC.money(inc) + '</b><span>je ' + MC.durShort(d.cycle) + '</span></div>' +
-          '<div class="stat"><b data-left="' + (b.s + d.cycle) + '" data-zero="Jetzt"></b><span>nächste Kasse</span></div></div>';
+          '<div class="stat"><b>' + MC.money(inc * nc) + '</b><span>' + (nc >= MC.SHOP_CAP ? 'Kasse voll' : 'in der Kasse') + '</span></div></div>' +
+          '<div class="mission"><h3>Kasse ' + nc + ' / ' + MC.SHOP_CAP + ' Takte</h3><div class="prog"><i style="width:' + Math.round(100 * nc / MC.SHOP_CAP) + '%"></i></div>' +
+          '<div class="sub">Die Kasse füllt sich auch, wenn du nicht da bist – bis sie nach ' + MC.durShort(d.cycle * MC.SHOP_CAP) + ' voll ist.</div></div>';
       }
       h += footer(b, d);
     } else if (d.kind === 'deco') {
@@ -535,7 +537,6 @@
       toggle('ignoreMute', 'Ton auch bei Stummschaltung') +
       (MC.Cloud.enabled ? '<h4>Dein Stadt-Code</h4><div class="codebox">' + esc(MC.Cloud.code) + '</div>' +
         '<div class="row"><button class="btn primary" data-do="copylink">' + (navigator.share ? 'Link teilen' : 'Link kopieren') + '</button><button class="btn ghost" data-do="usecode">Anderen Code eingeben</button></div>' : '') +
-      '<h4>Spielstand</h4><div class="row"><button class="btn ghost" data-do="export">Sichern</button><button class="btn ghost" data-do="import">Wiederherstellen</button></div>' +
       '<div class="row" style="margin-top:8px"><button class="btn primary" data-do="ranking">Bestenliste</button><button class="btn ghost" data-do="advisor">Berater wechseln</button><button class="btn danger" data-do="reset">Neu anfangen</button></div>' +
       '<h4>Updates</h4><div class="row"><button class="btn ghost" data-do="update">Nach Update suchen</button></div>' +
       '<div class="next" style="margin-top:10px">Mogul City · Version 0.5 · <span data-cloud>' + esc(MC.Cloud.status) + '</span>' + (G.S.test ? ' · Teststadt' : '') + ' · Testphase: Spielfortschritt wird ausgewertet' + (AS.manifest.version ? ' · Assets ' + esc(AS.manifest.version) : '') + '</div>';
@@ -923,8 +924,6 @@
     if (v === 'invite') return openInvite();
     if (v === 'sendinvite') return sendInvite();
     if (v === 'buildfriend') { closeSheet(true); return V.setMode('place', { def: MC.DEF.w_freunde }); }
-    if (v === 'export') return exportSave();
-    if (v === 'import') return importSave();
     if (v === 'advisor') return chooseAdvisor(false);
     if (v === 'sets') return openSets();
     if (v === 'ex1' || v === 'ex10') {

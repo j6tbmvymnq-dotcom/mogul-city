@@ -15,7 +15,12 @@
   CL.on = function (f) { listeners.push(f); };
   function set(st) { CL.status = st; listeners.forEach(function (f) { f(st); }); }
   function clean(c) { return String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12); }
-  function gen() { var s = ''; for (var i = 0; i < 8; i++) s += ABC[Math.floor(Math.random() * ABC.length)]; return s; }
+  function gen() {   // sicherer Zufall (crypto), Rückfall nur für sehr alte Browser
+    var s = '', r = new Uint32Array(8);
+    try { crypto.getRandomValues(r); } catch (e) { for (var j = 0; j < 8; j++) r[j] = Math.floor(Math.random() * 4294967296); }
+    for (var i = 0; i < 8; i++) s += ABC[r[i] % ABC.length];
+    return s;
+  }
   function urlCode() {
     var m = /[?&#]code=([A-Za-z0-9]+)/.exec(location.search + location.hash);
     return m ? clean(m[1]) : '';

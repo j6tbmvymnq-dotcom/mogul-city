@@ -108,10 +108,12 @@
   }
   function load(first) {
     rpc('mc_stats', { p_pin: pin, p_test: withTests }).then(function (d) {
+      if (d && d.error) throw new Error(/gesperrt/.test(d.error) ? 'GESPERRT ' + d.error : 'falsche PIN');
       data = d; try { localStorage.setItem(PINKEY, pin); } catch (e) { }
       $('hdr').hidden = false; render();
     }).catch(function (e) {
-      if (/PIN/.test(e.message)) { try { localStorage.removeItem(PINKEY); } catch (x) { } login(first ? 'Falsche PIN.' : ''); }
+      if (/^GESPERRT/.test(e.message)) login('Admin ist ' + e.message.replace('GESPERRT ', '') + '.');
+      else if (/PIN/.test(e.message)) { try { localStorage.removeItem(PINKEY); } catch (x) { } login(first ? 'Falsche PIN.' : ''); }
       else if (first || !data) login(/mc_stats|function/.test(e.message) ? 'Statistik ist auf dem Server noch nicht eingerichtet.' : 'Keine Verbindung: ' + e.message);
     });
   }
@@ -144,10 +146,12 @@
     return h + list.map(function (s) {
       var tut = s.tut === 'done' ? '<span class="tag ok">Tutorial fertig</span>' : s.tut == null ? '' : '<span class="tag warn">Tutorial Schritt ' + (+s.tut + 1) + '</span>';
       var via = s.app ? '<span class="tag ok">App</span>' : s.browser ? '<span class="tag warn">Browser</span>' : '<span class="tag">nicht installiert</span>';
-      return '<div class="city"><div class="top"><b>' + esc(s.name) + '</b>' + (s.test ? '<span class="tag red">Test</span>' : '') + via + tut + '</div>' +
+      return '<div class="city"><div class="top"><b>' + esc(s.name) + '</b>' + (s.test ? '<span class="tag red">Test</span>' : '') + (s.flag ? '<span class="tag red">Verdacht</span>' : '') + via + tut + '</div>' +
+        (s.flag ? '<div class="mute" style="margin-top:4px">Verdacht: ' + esc(s.flag) + ' · nicht in Bestenliste</div>' : '') +
         '<div class="facts"><div>Level <b>' + (s.lvl || 1) + '</b></div><div>Ziel <b>' + (s.ziel == null ? '–' : s.ziel) + '</b></div><div>Sitzungen <b>' + s.sitzungen + '</b></div><div>Tage <b>' + s.tage + '</b></div>' +
         '<div>Seit <b>' + ago(s.erst) + '</b></div><div>Zuletzt <b>' + ago(s.zuletzt) + '</b></div><div style="grid-column:1/-1">Gerät <b>' + esc(s.geraet || '–') + '</b> · Letztes: <b>' + esc(label(s.letztes)) + '</b></div></div>' +
-        (s.pub ? '<div class="acts">' + (s.test ? '' : '<button class="btn" data-act="test" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Als Test markieren</button>') +
+        (s.pub ? '<div class="acts">' + (s.test ? '<button class="btn" data-act="untest" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Test entfernen</button>' : '<button class="btn" data-act="test" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Als Test markieren</button>') +
+          (s.flag ? '<button class="btn" data-act="unflag" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Verdacht aufheben</button>' : '<button class="btn" data-act="flag" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Verdacht</button>') +
           '<button class="btn red" data-act="delete" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Löschen</button></div>' : '<div class="mute">Ohne Spielstand (nur Ereignisse)</div>') + '</div>';
     }).join('');
   }
@@ -167,15 +171,18 @@
         var act = b.getAttribute('data-act'), name = b.getAttribute('data-name');
         if (act === 'delete' && !confirm('Stadt „' + name + '“ endgültig löschen? Das lässt sich nicht rückgängig machen. Auch auf dem Gerät des Spielers wird sie danach nicht mehr gespeichert.')) return;
         if (act === 'test' && !confirm('„' + name + '“ als Teststadt markieren? Sie verschwindet dann aus Bestenliste und Statistik.')) return;
+        if (act === 'untest' && !confirm('Test-Markierung von „' + name + '“ entfernen? Am besten, während die App des Spielers geschlossen ist – beim nächsten Öffnen übernimmt sie die Änderung.')) return;
+        if (act === 'flag' && !confirm('„' + name + '“ unter Verdacht stellen? Die Stadt bleibt bestehen, erscheint aber nicht mehr in der Bestenliste und zählt nicht als geworbener Freund.')) return;
         b.disabled = true;
         rpc('admin_city', { p_pin: pin, p_pub: b.getAttribute('data-pub'), p_action: act }).then(function (r) {
-          toast(r === 'ok' ? (act === 'delete' ? '„' + name + '“ gelöscht' : '„' + name + '“ ist jetzt Teststadt') : 'Ging nicht: ' + r); load();
+          var done = { delete: 'gelöscht', test: 'ist jetzt Teststadt', untest: 'ist keine Teststadt mehr', flag: 'steht unter Verdacht', unflag: 'ist nicht mehr unter Verdacht' }[act];
+          toast(r === 'ok' ? '„' + name + '“ ' + done : 'Ging nicht: ' + r); load();
         }).catch(function (e) { b.disabled = false; toast(/admin_city|function/.test(e.message) ? 'Admin-Funktionen sind auf dem Server noch nicht eingerichtet.' : 'Fehler: ' + e.message); });
       };
     });
     var pg = $('purge'); if (pg) pg.onclick = function () {
       if (!confirm('Alle ' + (data.teststaedte || 0) + ' Teststädte endgültig löschen?')) return;
-      rpc('admin_purge_tests', { p_pin: pin }).then(function (n) { toast(n + ' Teststädte gelöscht'); load(); })
+      rpc('admin_purge_tests', { p_pin: pin }).then(function (n) { toast(n < 0 ? 'PIN abgelehnt oder gesperrt' : n + ' Teststädte gelöscht'); load(); })
         .catch(function (e) { toast(/admin_purge|function/.test(e.message) ? 'Admin-Funktionen sind auf dem Server noch nicht eingerichtet.' : 'Fehler: ' + e.message); });
     };
     var lo = $('logout'); if (lo) lo.onclick = function () { try { localStorage.removeItem(PINKEY); } catch (e) { } pin = ''; data = null; login(); };

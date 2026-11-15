@@ -21,6 +21,7 @@
   MC.REFUND = 0.35;        // Abriss-Erstattung
   MC.CANCEL_REFUND = 0.5;  // Erstattung bei Vertragskündigung
   MC.MAX_BONUS = 400;
+  MC.SHOP_CAP = 5;         // Laden-Kasse fasst 5 Takte (bei 3 Min. = 15 Min.), dann ist sie voll – mehr verschiebt das Late Game (Teststadt geprüft)
 
   /* Mietverträge nach dem Original (tools/wirtschaft/original.json):
      f = Einnahme als Vielfaches der 1-Std.-Miete des Hauses, sign = Abschlusskosten (× Hausfaktor sk),

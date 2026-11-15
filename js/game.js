@@ -59,6 +59,7 @@
   };
   // Spielstand als Text sichern / wiederherstellen
   G.exportCode = function () {
+    if (G.visiting) return '';   // nie eine besuchte Stadt exportieren
     G.saveNow();
     return 'MOGUL1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S))));
   };
@@ -244,10 +245,18 @@
     }
     return n;
   };
-  G.shopIncome = function (b) {
+  G.shopIncome = function (b) {   // je Takt
     var d = MC.DEF[b.t];
     return Math.round(G.customers(b) * d.per * (1 + effect('shop') / 100));
   };
+  // Volle Takte in der Kasse (füllt sich auch, wenn man nicht kassiert – bis MC.SHOP_CAP)
+  G.shopCycles = function (b, t) {
+    var d = MC.DEF[b.t]; t = t || G.now();
+    if (!b.s) return 0;
+    return Math.min(MC.SHOP_CAP, Math.floor((t - b.s) / d.cycle));
+  };
+  G.shopStored = function (b) { return G.shopIncome(b) * G.shopCycles(b); };
+  G.shopFull = function (b) { return G.shopCycles(b) >= MC.SHOP_CAP; };
 
   // Vertragskonditionen für ein Haus
   G.offer = function (b, c) {
@@ -443,7 +452,7 @@
     var d = MC.DEF[b.t], t = G.now();
     var left = Math.max(0, b.cu - t), total = Math.max(1, b.cu - b.cs);
     return {
-      cash: Math.max(100, Math.round(d.cost * 0.6 * left / total)),
+      cash: Math.max(100, Math.round(G.value(d) * 0.6 * left / total)),   // Gold-Gebäude: Wert des Golds zählt mit
       gold: Math.max(1, Math.ceil(left / MC.H))
     };
   };
@@ -509,10 +518,11 @@
       delete b.c;
       S.st.collected++;
     } else if (d.kind === 'shop') {
-      var inc = G.shopIncome(b);
+      var per = G.shopIncome(b), n = G.shopCycles(b), inc = per * n;
       if (inc <= 0) return { cash: 0, xp: 0, none: true };
-      res = { cash: inc, xp: xpGain(Math.max(1, inc / 500)) };   // wie in der Simulation geprüft
-      b.s = G.now();
+      res = { cash: inc, xp: xpGain(Math.max(1, inc / 500)), cycles: n };   // XP wie in der Simulation geprüft
+      var now = G.now(), cyc = MC.DEF[b.t].cycle;
+      b.s = n >= MC.SHOP_CAP ? now : b.s + n * cyc;   // angefangener Takt läuft weiter
       S.st.shopCollected++;
     }
     if (res) {
