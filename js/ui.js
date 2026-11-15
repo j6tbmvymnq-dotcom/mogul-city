@@ -106,9 +106,21 @@
     if (done && missionWasDone === false) { UI.toast('Ziel erreicht: ' + m.m.t); UI.sound('mission'); UI.say('ziel_fertig'); }
     missionWasDone = done;
     goalBox(m);
+    flatBtn();
     if (V.mode === 'move') moveBanner();
     features();
   }
+
+  // ---------- Flache Ansicht (2D) zum Bearbeiten: Knopf rechts über der Leiste ----------
+  function flatBtn() {
+    var b = $('flatBtn'); if (!b) return;
+    var show = !G.inTut() && !G.visiting;
+    if (!show && V.flat) V.setFlat(false);
+    b.hidden = !show;
+    $('flatTxt').textContent = V.flat ? '3D' : '2D';
+    b.classList.toggle('on', V.flat);
+  }
+  UI.flatChanged = flatBtn;
 
   // ---------- Aktuelles Ziel dauerhaft oben links (mit Fortschritt, Tippen öffnet die Ziele) ----------
   function goalShort(m) {
@@ -795,6 +807,10 @@
     if (ng && !ng.moving && (G.S.cash < ng.def.cost || G.S.gold < (ng.def.gold || 0))) { V.setMode('idle'); UI.toast('Das Geld reicht nicht für ein weiteres Stück.'); }
   });
   $('menuBtn').addEventListener('click', function () { UI.sound('tap'); openMenu(); });
+  $('flatBtn').addEventListener('click', function () {
+    UI.sound('tap'); V.setFlat(!V.flat);
+    if (V.flat && !G.S.seen.flat) { G.markSeen('flat'); UI.toast('Flache Ansicht: Gebäude liegen als Grundfläche, nichts verdeckt Straßen. Ideal zum Umbauen.'); }
+  });
   $('goal').addEventListener('click', function () { UI.sound('tap'); if (V.mode !== 'idle') V.setMode('idle'); openMissions(); });
   $('lvlBox').addEventListener('click', function () { UI.sound('tap'); openBuilding(G.S.b[0]); });
 

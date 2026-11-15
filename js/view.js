@@ -15,6 +15,10 @@
   V.mode = 'idle';
   V.ghost = null;       // {def, x, y, moving: Gebäude|null}
   V.highlight = null;   // Gebäude, dessen Reichweite gezeigt wird
+  // Flache Ansicht (Bearbeiten): Gebäude liegen als Grundfläche auf dem Boden, nichts verdeckt Straßen und Felder
+  V.flat = false;
+  V.setFlat = function (on) { V.flat = !!on; itemsDirty = true; V.kick(); if (MC.UI.flatChanged) MC.UI.flatChanged(); };
+  var FLAT_COL = { house: ['#f3d27a', '#b8892a'], shop: ['#8cc2f2', '#2f74b8'], deco: ['#8fd68a', '#3d8c3a'], wonder: ['#d9b0f2', '#8a4fb0'], hq: ['#6f9df0', '#2b5fc0'] };
 
   function wx(x, y) { return (x - y) * HW; }
   function wy(x, y) { return (x + y) * HH; }
@@ -256,6 +260,7 @@
   function pick(sx, sy) {
     // vorderstes Gebäude unter dem Finger (pixelgenau über das Sprite)
     var t = toTile(sx, sy);
+    if (V.flat) { var fid = G.at(Math.floor(t.fx), Math.floor(t.fy)); return fid > 0 ? G.get(fid) : null; }
     for (var i = items.length - 1; i >= 0; i--) {
       var it = items[i];
       if (!it.b) continue;
@@ -271,6 +276,7 @@
     return id > 0 ? G.get(id) : null;
   }
   function pickIcon(sx, sy) {
+    if (V.flat) return null;
     var t = toTile(sx, sy), k = iconScale();
     for (var i = items.length - 1; i >= 0; i--) {
       var it = items[i];
@@ -434,7 +440,7 @@
           diamond(LX + x, LY + y, LX + x + 1, LY + y + 1); g.fill();
           diamond(LX + x + 1, LY + y + 1, LX + x + 2, LY + y + 2); g.fill();
         }
-        if (building) {
+        if (building || V.flat) {
           g.beginPath();
           for (x = 0; x <= SEC; x++) {
             g.moveTo(wx(LX + x, LY), wy(LX + x, LY)); g.lineTo(wx(LX + x, LY + SEC), wy(LX + x, LY + SEC));
@@ -509,20 +515,22 @@
     }
     for (i = 0; i < (V.dbg.noItems ? 0 : items.length); i++) {
       var it = items[i], sp = it.sp;
+      if (V.flat) continue;
       if (!gDrawn && it.depth > gDepth) drawGhost();
       if (it.sx + sp.w < vx0 || it.sx - sp.w > vx1 || it.sy + sp.h < vy0 || it.sy - sp.oy > vy1) continue;
       if (it.b && it.b.id === movingId) { g.globalAlpha = 0.25; g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h); g.globalAlpha = 1; continue; }
       if (it.b && it.st === 'build') { drawSite(it, t); continue; }
       g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
     }
+    if (V.flat) drawFlat(t, movingId, q);
     if (q) {
-      if (!gDrawn) drawGhost();
+      if (!gDrawn && !V.flat) drawGhost();
       ghostLabel(q, A.sprite(q.def.id));
     }
 
     // Verkaufsschilder
     var lp = G.landPrice();
-    if (lp && V.mode === 'idle' && G.unlocked('land') && !G.inTut() && !G.visiting) {
+    if (lp && V.mode === 'idle' && !V.flat && G.unlocked('land') && !G.inTut() && !G.visiting) {
       for (sx = 0; sx < MC.SECTORS; sx++) for (sy = 0; sy < MC.SECTORS; sy++) {
         if (!G.sectorBuyable(sx, sy)) continue;
         sign(wx(sx * SEC + SEC / 2, sy * SEC + SEC / 2), wy(sx * SEC + SEC / 2, sy * SEC + SEC / 2), lp);
@@ -535,6 +543,7 @@
       var o = items[i];
       if (!o.b || o.b.id === movingId) continue;
       if (o.ix < vx0 - 30 || o.ix > vx1 + 30 || o.iy < vy0 - 40 || o.iy > vy1 + 40) continue;
+      if (V.flat) continue;
       if (o.st === 'build') { progress(o, t, k); continue; }
       if (o.icon && V.mode !== 'place') icon(o.icon, o.ix, o.iy + bob * k, k, now);
     }
@@ -565,6 +574,41 @@
       g.textAlign = 'center'; g.lineWidth = 3.5 * k; g.strokeStyle = 'rgba(15,25,45,.85)'; g.lineJoin = 'round';
       var fy = f.y - 30 - a * 46 * k;
       g.strokeText(f.text, f.x, fy); g.fillStyle = f.color; g.fillText(f.text, f.x, fy);
+      g.globalAlpha = 1;
+    }
+  }
+
+  // Flache Ansicht: Grundfläche je Gebäude (Farbe nach Art), kleines Bild in der Mitte, Name ab genug Platz
+  function drawFlat(t, movingId, q) {
+    var all = items.filter(function (it) { return it.b; });
+    if (q) all.push({ ghost: true, b: { x: q.x, y: q.y, t: q.def.id }, d: q.def, sp: A.sprite(q.def.id) });
+    for (var i = 0; i < all.length; i++) {
+      var it = all[i], b = it.b, d = it.d, s = d.size, col = FLAT_COL[d.kind] || FLAT_COL.house;
+      var fade = it.ghost ? 0.9 : (b.id && b.id === movingId ? 0.25 : 1);
+      g.globalAlpha = fade;
+      var inset = d.kind === 'deco' ? 0.14 : 0.07;
+      if (!it.ghost) {   // der Geist hat schon seine grüne/rote Fläche
+        diamond(b.x + inset, b.y + inset, b.x + s - inset, b.y + s - inset);
+        var site = it.st === 'build';
+        g.fillStyle = site ? '#dcc79a' : col[0]; g.fill();
+        var bad = it.st === 'noroad';
+        g.lineWidth = bad ? 2.4 : 1.4; g.strokeStyle = bad ? '#d93025' : col[1];
+        if (site || bad) g.setLineDash([5, 4]);
+        g.stroke(); g.setLineDash([]);
+      }
+      // kleines Bild: Sprite in die Raute eingepasst
+      var sp = it.sp, cx = wx(b.x + s / 2, b.y + s / 2), cy = wy(b.x + s / 2, b.y + s / 2);
+      var sc = Math.min((s * HW * 1.15) / sp.w, (s * HH * 1.7) / sp.h, 0.8);
+      if (d.kind === 'deco') sc *= 0.9;
+      g.drawImage(sp.c, cx - sp.w * sc / 2, cy - sp.h * sc * 0.62, sp.w * sc, sp.h * sc);
+      // Name, wenn die Grundfläche auf dem Bildschirm breit genug ist
+      if (!it.ghost && d.kind !== 'deco' && s * HW * 2 * cam.z > 92) {
+        var fs = Math.min(13, 4 + s * 3) / Math.max(0.6, cam.z) * Math.min(1.25, cam.z);
+        g.font = '700 ' + fs + 'px -apple-system, "Segoe UI", system-ui, sans-serif'; g.textAlign = 'center';
+        g.lineWidth = fs * 0.28; g.lineJoin = 'round'; g.strokeStyle = 'rgba(255,255,255,.9)';
+        var ty = cy + s * HH * 0.55;
+        g.strokeText(d.name, cx, ty); g.fillStyle = '#1d2b44'; g.fillText(d.name, cx, ty);
+      }
       g.globalAlpha = 1;
     }
   }
@@ -684,7 +728,7 @@
       txt = '+' + d.bonus + ' % für ' + n + (n === 1 ? ' Haus' : ' Häuser');
     }
     if (!txt) return;
-    var k = iconScale(), x = wx(q.x, q.y), y = wy(q.x, q.y) - Math.min(gs.top, 150) - 10 * k;
+    var k = iconScale(), x = wx(q.x, q.y), y = V.flat ? wy(q.x, q.y) - 6 * k : wy(q.x, q.y) - Math.min(gs.top, 150) - 10 * k;
     g.font = '700 ' + (12 * k) + 'px -apple-system, "Segoe UI", system-ui, sans-serif';
     var w = g.measureText(txt).width + 18 * k;
     // im sichtbaren Bereich halten (am Bildschirmrand nicht abschneiden)
