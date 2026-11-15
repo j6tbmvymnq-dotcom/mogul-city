@@ -281,8 +281,13 @@
     });
     h += '</div><div class="grid">';
     MC.BUILDINGS.slice().sort(function (x, y) { return (x.lvl - y.lvl) || ((x.gold ? 1 : 0) - (y.gold ? 1 : 0)); }).forEach(function (d) {
-      if (d.kind !== shopTab) return;
+      if ((d.friend ? (tabUnlocked('wonder') ? 'wonder' : 'deco') : d.kind) !== shopTab) return;
       var lock = (d.lvl > S.lvl && !S.legacy) || !G.kindUnlocked(d), own = d.kind === 'wonder' && G.count(d.id) > 0;
+      if (d.friend && lock) {
+        if (!MC.Cloud.enabled || G.inTut()) return;
+        h += '<button class="item teaser friend" data-do="invite"><img src="' + A.url(d.id) + '" alt=""><span class="nm">' + esc(d.name) + '</span><span class="st">Erster Freund: +' + MC.FRIEND_FIRST + ' % auf alles</span><span class="pr">Freund einladen</span></button>';
+        return;
+      }
       if (lock) {
         // nur die nächsten zwei gesperrten als Silhouette zeigen (Vorfreude), der Rest bleibt verborgen
         if (teasers >= 2 || (d.gold && !G.unlocked('premium') && d.lvl <= S.lvl)) return;
@@ -387,6 +392,9 @@
     } else if (d.kind === 'deco') {
       chips.push(chip('+' + d.bonus + ' % Miete', 'g')); chips.push(chip('Radius ' + d.reach));
       h = hero(d, chips, 'Erhöht die Miete aller Häuser im gelben Bereich.') + footer(b, d);
+    } else if (d.kind === 'wonder' && d.friend) {
+      chips.push(chip((G.S.friends || 0) + ' Freunde', 'y')); chips.push(chip('+' + G.friendBonus() + ' % auf alles', 'g'));
+      h = hero(d, chips) + '<div class="row" style="margin-top:10px"><button class="btn goldbtn" style="flex:1" data-do="invite">Weitere Freunde einladen</button></div>' + footer(b, d);
     } else if (d.kind === 'wonder') {
       chips.push(chip('Wirkt stadtweit', 'y'));
       h = hero(d, chips) + footer(b, d);
@@ -487,7 +495,8 @@
 
   function toggle(key, label) { return '<button class="check' + (G.S[key] ? ' on' : '') + '" data-tog="' + key + '"><i></i>' + label + '</button>'; }
   function openMenu() {
-    var h = toggle('sound', 'Soundeffekte') + toggle('music', 'Musik') + toggle('voice', 'Berater-Stimme') +
+    var h = (MC.Cloud.enabled && !G.inTut() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn" style="flex:1" data-do="invite">Freunde einladen' + (G.S.friends ? ' (' + G.S.friends + ')' : ' – +' + MC.FRIEND_FIRST + ' %') + '</button></div>' : '') +
+      toggle('sound', 'Soundeffekte') + toggle('music', 'Musik') + toggle('voice', 'Berater-Stimme') +
       toggle('ignoreMute', 'Ton auch bei Stummschaltung (iPhone/iPad)') +
       '<div class="next" style="margin:-4px 2px 8px">Aus: Das Spiel folgt dem Stummschalter und lässt deine eigene Musik weiterlaufen.</div>' +
       '<h4>Als App auf den Home-Bildschirm</h4><div class="note">In Safari auf <b>Teilen</b> tippen und <b>„Zum Home-Bildschirm“</b> wählen. Danach startet Mogul City im Vollbild und läuft auch ohne Internet.</div>' +
@@ -597,10 +606,92 @@
       (sets.length ? '<h4>Neue Sammlung</h4><p>' + esc(sets.join(', ')) + '</p>' : '') +
       (feats.length ? '<h4>Neu freigeschaltet</h4><p>' + esc(feats.join(', ')) + '</p>' : '') +
       '<div class="row"><button class="btn primary" data-m="ok">Weiter</button></div>', {
-      ok: function () { if (MC.FEATURE_INTRO[e.lvl]) introFeature(e.lvl); else UI.say('level', null, 60000); }
+      ok: function () {
+        if (MC.FEATURE_INTRO[e.lvl]) introFeature(e.lvl); else UI.say('level', null, 60000);
+        promoteFriends(e.lvl, MC.FEATURE_INTRO[e.lvl] ? 8000 : 2500);
+      }
     });
     UI.sound('level');
   }
+
+  // ---------- Freunde einladen ----------
+  // Berater werben nach Erfolgsmomenten (Level 5 = etwa 10 Min., dann Level 8 und 12), nur solange noch kein Freund mitspielt
+  function promoteFriends(lvl, delay) {
+    var S = G.S;
+    if (!MC.Cloud.enabled || S.legacy || G.visiting || (S.friends || 0) > 0 || MC.FRIEND_PROMPTS.indexOf(lvl) < 0 || S.seen['inv_' + lvl]) return;
+    G.markSeen('inv_' + lvl);
+    var first = lvl === MC.FRIEND_PROMPTS[0];
+    setTimeout(function () {
+      if (G.visiting) return;
+      modal('<img class="art" src="' + A.url('w_freunde') + '" alt=""><h2>' + (first ? 'Spiel mit Freunden!' : 'Deine Freunde fehlen noch') + '</h2>' +
+        '<p>' + esc(first ? MC.VOICE.freunde : MC.VOICE.freunde_erinnerung) + '</p>' + friendPerks() +
+        '<div class="row"><button class="btn ghost" data-m="no">Später</button><button class="btn goldbtn" data-m="inv">Freunde einladen</button></div>', {
+        inv: function () { setTimeout(openInvite, 50); }
+      });
+      UI.say(first ? 'freunde' : 'freunde_erinnerung');
+      MC.Cloud.track('einladen_hinweis', lvl, 'inv_' + lvl);
+    }, delay);
+  }
+  function friendPerks() {
+    return '<div class="perks"><div><b>1. Freund</b><span>Platz der Freundschaft + ' + MC.FRIEND_FIRST + ' % auf alle Mieten und Läden</span></div>' +
+      '<div><b>Jeder weitere</b><span>+1 % obendrauf (bis ' + MC.FRIEND_MAX + ' %)</span></div>' +
+      '<div><b>Zählt ab</b><span>Level ' + MC.FRIEND_LVL + ' deines Freundes</span></div></div>';
+  }
+  function openInvite() {
+    var S = G.S, n = S.friends || 0, list = S.friendNames || [];
+    var h = '<div class="hero"><img src="' + A.url('w_freunde') + '" alt=""><div><div class="sub">Platz der Freundschaft</div><div class="big">' + (n ? '+' + G.friendBonus() + ' %' : 'Noch kein Freund') + '</div>' +
+      '<div class="chips">' + chip(n + (n === 1 ? ' Freund' : ' Freunde'), 'y') + (n ? chip('Nächster: +1 %', 'g') : chip('Erster: +' + MC.FRIEND_FIRST + ' %', 'g')) + '</div></div></div>' +
+      '<div class="note">Schick deinen Freunden deinen Einladungslink. Sobald jemand darüber eine Stadt gründet und Level ' + MC.FRIEND_LVL + ' erreicht, zählt er als dein Freund. Für jeden Freund weht eine Fahne auf deinem Platz der Freundschaft.</div>' +
+      friendPerks();
+    if (list.length) h += '<h4>Deine Freunde</h4>' + list.map(function (f) { return '<div class="next"><b>' + esc(f.name || 'Unbekannt') + '</b> · Level ' + (f.lvl || 1) + '</div>'; }).join('');
+    h += MC.Cloud.enabled ? '<div class="row" style="margin-top:12px"><button class="btn goldbtn" style="flex:1" data-do="sendinvite">Einladung teilen</button></div>'
+      : '<div class="note">Einladen braucht den Cloud-Spielstand.</div>';
+    if (n && !G.count('w_freunde')) h += '<div class="row" style="margin-top:8px"><button class="btn primary" style="flex:1" data-do="buildfriend">Platz der Freundschaft bauen</button></div>';
+    openSheet('Freunde einladen', h, { type: 'invite' });
+    MC.Cloud.track('einladen_offen');
+    checkFriends(true);
+  }
+  UI.openInvite = openInvite;
+  function sendInvite() {
+    MC.Cloud.inviteLink().then(function (link) {
+      var txt = 'Bau mit mir in Mogul City! Gründe deine eigene Stadt über meinen Link:';
+      MC.Cloud.track('einladen_teilen');
+      if (navigator.share) return navigator.share({ title: 'Mogul City', text: txt, url: link }).catch(function () { });
+      (navigator.clipboard ? navigator.clipboard.writeText(txt + ' ' + link) : Promise.reject()).then(function () { UI.toast('Einladungslink kopiert.'); }, function () { prompt('Einladungslink:', link); });
+    }, function () { UI.toast('Einladung geht erst, wenn deine Stadt in der Cloud gespeichert ist.', true); });
+  }
+  // Freunde vom Server holen; neue Freunde feiern
+  var friendsChecked = 0;
+  function checkFriends(force) {
+    if (!MC.Cloud.enabled || G.visiting || G.inTut() || document.body.classList.contains('gated')) return;
+    if (!force && Date.now() - friendsChecked < 5 * MC.MIN) return;
+    friendsChecked = Date.now();
+    MC.Cloud.friends().then(function (list) {
+      var S = G.S, old = S.friends || 0, n = list.length;
+      S.friendNames = list.slice(0, 40).map(function (f) { return { name: f.name, lvl: f.lvl }; });
+      if (n === old) return;
+      S.friends = n; G.save(); hud(); V.kick();
+      if (cur && cur.type === 'invite') openInvite();
+      if (n > old) celebrateFriend(old, n, list[list.length - 1]);
+    }).catch(function () { });
+  }
+  UI.checkFriends = checkFriends;
+  function celebrateFriend(old, n, f) {
+    var name = esc((f && f.name) || 'Ein Freund');
+    if (old === 0) {
+      modal('<img class="art" src="' + A.url('w_freunde') + '" alt=""><h2>' + name + ' spielt mit!</h2><p>Dein erster Freund ist dabei. Du darfst jetzt den <b>Platz der Freundschaft</b> bauen: <b>+' + MC.FRIEND_FIRST + ' %</b> auf alle Mieten und Gewerbe-Einnahmen.</p>' +
+        '<div class="row"><button class="btn ghost" data-m="no">Später</button><button class="btn goldbtn" data-m="go">Jetzt platzieren</button></div>', {
+        go: function () { if (!G.count('w_freunde')) V.setMode('place', { def: MC.DEF.w_freunde }); }
+      });
+      UI.say('freund_neu');
+    } else {
+      modal('<img class="art" src="' + A.url('w_freunde') + '" alt=""><h2>' + name + ' ist dabei!</h2><p>Jetzt ' + n + ' Freunde: <b>+' + G.friendBonus() + ' %</b> auf alle Mieten und Gewerbe-Einnahmen. Auf deinem Platz der Freundschaft weht eine neue Fahne.</p>' +
+        '<div class="row"><button class="btn primary" data-m="ok">Super</button></div>');
+      UI.say('freund_mehr');
+    }
+    UI.sound('set');
+  }
+
   function exportSave() {
     var code = G.exportCode();
     modal('<h2>Spielstand sichern</h2><p>Kopiere diesen Code und bewahre ihn auf (z. B. in Notizen). Damit holst du deine Stadt auf jedes Gerät zurück.</p>' +
@@ -750,6 +841,9 @@
       });
     }
     if (v === 'ranking') { MC.Cloud.track('bestenliste'); return openRanking(); }
+    if (v === 'invite') return openInvite();
+    if (v === 'sendinvite') return sendInvite();
+    if (v === 'buildfriend') { closeSheet(true); return V.setMode('place', { def: MC.DEF.w_freunde }); }
     if (v === 'export') return exportSave();
     if (v === 'import') return importSave();
     if (v === 'advisor') return chooseAdvisor(false);
@@ -959,6 +1053,7 @@
       return;
     }
     if (MC.Install.standalone()) MC.Cloud.track('app', null, 'app');
+    setTimeout(function () { checkFriends(true); }, 4000);   // neue Freunde seit dem letzten Mal?
     if (MC.Install.vp) MC.Cloud.track('anzeige', MC.Install.vp, 'anzeige_' + MC.Install.vp);   // Fenstermaße der iPhone-App (Fehlersuche)
     if (!G.S.advisor) chooseAdvisor(true);
     else if (!G.S.name) askName(true);
@@ -1042,6 +1137,7 @@
     else {
       if (hiddenAt && Date.now() - hiddenAt > 30 * MC.MIN) MC.Cloud.track('sitzung', G.S.lvl);   // App kam nach Pause zurück
       G.tick(); hud(); if (G.S.music) AS.music(true);
+      checkFriends();
     }
   });
   window.addEventListener('pagehide', G.saveNow);

@@ -47,6 +47,7 @@ Erzeugt mit `node tools/assets.js`. Status: ok / fehlt / FEHLER. Vorgaben: [ASSE
 | sprites/w_freiheit.svg | 192 breit, Höhe frei (96–456) | Freiheitsmonument: Weltwunder, 3×3 Felder, ab Level 21. Verdoppelt den Tagesbonus. | ok |
 | sprites/w_pyramide.svg | 256 breit, Höhe frei (128–488) | Sonnenpyramide: Weltwunder, 4×4 Felder, ab Level 26. +10 % Miete in der ganzen Stadt. | ok |
 | sprites/w_rakete.svg | 192 breit, Höhe frei (96–456) | Raumfähre: Weltwunder, 3×3 Felder, ab Level 32. Alle Bauzeiten 25 % kürzer. | ok |
+| sprites/w_freunde.svg | 128 breit, Höhe frei (64–424) | Platz der Freundschaft: Weltwunder, 2×2 Felder, ab Level 1. Erster Freund: +5 % auf alle Mieten und Gewerbe-Einnahmen, jeder weitere Freund +1 % (bis 25 %). Für jeden Freund weht hier eine Fahne. | ok |
 
 ## Baustelle
 
@@ -221,4 +222,4 @@ Erzeugt mit `node tools/assets.js`. Status: ok / fehlt / FEHLER. Vorgaben: [ASSE
 
 ## Sprecher
 
-57 Zeilen je Berater (Texte in voice/zeilen.json), vorhanden: 114 von 114. Erzeugen: `tools/stimmen/vertone.py`.
+61 Zeilen je Berater (Texte in voice/zeilen.json), vorhanden: 122 von 122. Erzeugen: `tools/stimmen/vertone.py`.

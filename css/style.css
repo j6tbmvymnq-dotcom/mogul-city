@@ -331,3 +331,11 @@ html.standalone { --st: calc(env(safe-area-inset-top, 0px) + 8px); }
 #flatBtn { position: absolute; right: calc(var(--sr) + 10px); bottom: calc(var(--sb) + 96px); width: 52px; height: 44px; padding: 0; justify-content: center; font-size: 15px; letter-spacing: .02em; }
 #flatBtn.on { background: linear-gradient(#ffd96a, #e9a516); color: #4a3200; }
 body.gated #flatBtn, body.visiting #flatBtn { display: none !important; }
+
+/* Freunde einladen */
+.perks { display: grid; gap: 6px; margin: 10px 0 4px; text-align: left; }
+.perks div { display: flex; gap: 10px; align-items: baseline; background: #fff7e0; border: 1px solid #f2dfa6; border-radius: 12px; padding: 8px 11px; font-size: 13.5px; }
+.perks b { flex: none; min-width: 92px; color: #8a6414; }
+.item.teaser.friend { filter: none; opacity: 1; border: 2px dashed #e9a516; background: #fffaf0; }
+.item.teaser.friend img { filter: none; opacity: 1; }
+.item.teaser.friend .pr { color: #8a6414; }

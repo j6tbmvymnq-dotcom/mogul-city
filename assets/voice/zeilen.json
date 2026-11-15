@@ -117,6 +117,22 @@
    "text": "Jetzt wird es groß: Weltwunder! Sie wirken auf die ganze Stadt. Außerdem kannst du Gold eintauschen und Premium-Gebäude bauen."
   },
   {
+   "id": "freunde",
+   "text": "Chef, ich hab eine Idee: Lad deine Freunde ein! Sobald der erste mitspielt, baust du den Platz der Freundschaft, und alle Mieten und Läden bringen fünf Prozent mehr. Jeder weitere Freund legt noch ein Prozent drauf."
+  },
+  {
+   "id": "freunde_erinnerung",
+   "text": "Denk an deine Freunde, Chef! Schon ein einziger Freund bringt dir fünf Prozent mehr auf die ganze Stadt."
+  },
+  {
+   "id": "freund_neu",
+   "text": "Großartig, dein erster Freund spielt mit! Der Platz der Freundschaft wartet auf dich. Bau ihn gleich!"
+  },
+  {
+   "id": "freund_mehr",
+   "text": "Noch ein Freund ist dabei! Wieder ein Prozent mehr für deine ganze Stadt."
+  },
+  {
    "id": "langer_vertrag",
    "text": "Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich."
   },

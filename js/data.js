@@ -9,7 +9,13 @@
   MC.SECTOR = 12;          // Kantenlänge eines Grundstücks-Sektors in Feldern
   MC.SECTORS = 5;          // 5 x 5 Sektoren
   MC.MAP = MC.SECTOR * MC.SECTORS;
-  MC.START_CASH = 150000;  // Tutorial-Bungalow + Kapital für die ersten Ziele (Teststadt: sonst zäher Start)
+  MC.START_CASH = 150000;
+  MC.FRIEND_MAX = 25;      // höchstens +25 % durch Freunde
+  MC.FRIEND_FIRST = 5;     // erster Freund: +5 %, jeder weitere +1 %
+  MC.FRIEND_PROMPTS = [5, 8, 12];   // Berater werben bei diesen Level-Aufstiegen fürs Einladen (solange kein Freund mitspielt)
+  MC.FRIEND_LVL = 3;       // ein Freund zählt ab diesem Level
+  // Fahnenmasten auf dem Platz der Freundschaft (Felder, Höhe in px) – gleiche Formel wie tools/svg/freunde.py
+  MC.FRIEND_POLES = (function () { var o = []; for (var i = 0; i < 12; i++) { var a = (i + 0.5) * Math.PI / 6; o.push([1 + 0.84 * Math.cos(a), 1 + 0.84 * Math.sin(a)]); } return o; })();  // Tutorial-Bungalow + Kapital für die ersten Ziele (Teststadt: sonst zäher Start)
   MC.START_GOLD = 5;
   MC.REFUND = 0.35;        // Abriss-Erstattung
   MC.CANCEL_REFUND = 0.5;  // Erstattung bei Vertragskündigung
@@ -114,7 +120,10 @@
     { id: 'w_turm', kind: 'wonder', name: 'Stahlturm', size: 3, cost: 5000000, build: 36 * H, lvl: 18, effect: 'shop', val: 15, desc: '+15 % Gewerbe-Einnahmen in der ganzen Stadt.' },
     { id: 'w_freiheit', kind: 'wonder', name: 'Freiheitsmonument', size: 3, cost: 8000000, build: 48 * H, lvl: 21, effect: 'daily', val: 100, desc: 'Verdoppelt den Tagesbonus.' },
     { id: 'w_pyramide', kind: 'wonder', name: 'Sonnenpyramide', size: 4, cost: 20000000, build: 60 * H, lvl: 26, effect: 'rent', val: 10, desc: '+10 % Miete in der ganzen Stadt.' },
-    { id: 'w_rakete', kind: 'wonder', name: 'Raumfähre', size: 3, cost: 60000000, build: 72 * H, lvl: 32, effect: 'build', val: 25, desc: 'Alle Bauzeiten 25 % kürzer.' }
+    { id: 'w_rakete', kind: 'wonder', name: 'Raumfähre', size: 3, cost: 60000000, build: 72 * H, lvl: 32, effect: 'build', val: 25, desc: 'Alle Bauzeiten 25 % kürzer.' },
+    // Freunde werben: erster geworbener Freund schaltet es frei, jeder Freund (ab Level 3) bringt +1 % auf Mieten und Gewerbe
+    { id: 'w_freunde', kind: 'wonder', name: 'Platz der Freundschaft', size: 2, cost: 0, build: 1 * MIN, lvl: 1, effect: 'friends', val: 1, friend: true,
+      desc: 'Erster Freund: +5 % auf alle Mieten und Gewerbe-Einnahmen, jeder weitere Freund +1 % (bis 25 %). Für jeden Freund weht hier eine Fahne.' }
   ];
   MC.BUILDINGS = B;
   MC.DEF = {};
@@ -247,6 +256,10 @@
     neu_sammlung: 'Neu: Sammlungen! Beim Kassieren findest du manchmal Sammelstücke. Volle Sammlungen tauschst du in der Zentrale gegen Belohnungen.',
     neu_wunder: 'Jetzt wird es groß: Weltwunder! Sie wirken auf die ganze Stadt. Außerdem kannst du Gold eintauschen und Premium-Gebäude bauen.',
     // Sitzungen
+    freunde: 'Chef, ich hab eine Idee: Lad deine Freunde ein! Sobald der erste mitspielt, baust du den Platz der Freundschaft, und alle Mieten und Läden bringen fünf Prozent mehr. Jeder weitere Freund legt noch ein Prozent drauf.',
+    freunde_erinnerung: 'Denk an deine Freunde, Chef! Schon ein einziger Freund bringt dir fünf Prozent mehr auf die ganze Stadt.',
+    freund_neu: 'Großartig, dein erster Freund spielt mit! Der Platz der Freundschaft wartet auf dich. Bau ihn gleich!',
+    freund_mehr: 'Noch ein Freund ist dabei! Wieder ein Prozent mehr für deine ganze Stadt.',
     langer_vertrag: 'Kleiner Tipp: Wenn du gleich weg musst, nimm einen langen Vertrag. Die Miete wartet dann auf dich.',
     zurueck: 'Schön, dass du zurück bist, Chef! Schau mal, was in der Zwischenzeit passiert ist.'
   };

@@ -146,11 +146,14 @@
     var v = 0;
     for (var i = 0; i < S.b.length; i++) {
       var d = MC.DEF[S.b[i].t];
-      if (d.kind === 'wonder' && d.effect === key && !S.b[i].cu) v += d.val;
+      if (d.kind !== 'wonder' || S.b[i].cu) continue;
+      if (d.friend) { if (key === 'rent' || key === 'shop') v += G.friendBonus(); }
+      else if (d.effect === key) v += d.val;
     }
     return v;
   }
   G.effect = effect;
+  G.friendBonus = function (n) { var f = n === undefined ? (S.friends || 0) : n; return f > 0 ? Math.min(MC.FRIEND_MAX, MC.FRIEND_FIRST + f - 1) : 0; };
   G.count = function (t) { var n = 0; for (var i = 0; i < S.b.length; i++) if (S.b[i].t === t) n++; return n; };
 
   G.hasRoad = function (b) {
@@ -257,6 +260,7 @@
   // ---------- Freischaltungen und Tutorial ----------
   G.unlocked = function (f) { return !!S.legacy || S.lvl >= (MC.FEATURES[f] || 1); };
   G.kindUnlocked = function (d) {
+    if (d.friend) return (S.friends || 0) > 0;
     if (d.gold && !G.unlocked('premium')) return false;
     return d.kind === 'house' || (d.kind === 'deco' && G.unlocked('deko')) || (d.kind === 'shop' && G.unlocked('gewerbe')) || (d.kind === 'wonder' && G.unlocked('wonder'));
   };

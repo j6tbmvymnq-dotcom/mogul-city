@@ -78,6 +78,9 @@
     // Lokaler Stand gehört zu einem anderen Code: vom Server neu beginnen
     if (G.S.cloudCode && G.S.cloudCode !== CL.code) G.S.syncRev = 0;
     markTest();
+    // Einladung: ?ref=<öffentliche Kennung des Werbenden> bei einer neuen Stadt merken (zählt serverseitig ab Level 3)
+    var ref = (/[?&]ref=([0-9a-fA-F-]{36})/.exec(location.search) || [])[1];
+    if (ref && !G.S.ref && (G.inTut() || !G.S.name)) { G.S.ref = ref.toLowerCase(); G.save(); }
     showInUrl();
     var orig = G.saveNow;
     G.saveNow = function () { (G.visiting ? G.visiting.own : G.S).dirty = true; orig(); schedule(); };
@@ -105,6 +108,18 @@
     if (!e || !e.filename) return;   // „Script error.“ fremder Skripte ohne Aussage
     if (evErr++ < 3) CL.track('fehler', String((e && e.message) || 'unbekannt').slice(0, 40) + ' @' + String((e && e.filename) || '').split('/').pop() + ':' + ((e && e.lineno) || 0));
   });
+
+  // Freunde werben (Server-Funktionen my_pub / my_refs, docs/sql-freunde.sql)
+  var pubCache = '';
+  CL.inviteLink = function () {
+    var base = location.origin + location.pathname;
+    if (pubCache) return Promise.resolve(base + '?ref=' + pubCache);
+    return rpc('my_pub', { p_code: CL.code }).then(function (p) { if (!p) throw new Error('noch nicht gespeichert'); pubCache = p; return base + '?ref=' + p; });
+  };
+  CL.friends = function () {
+    if (!CL.enabled || G.visiting) return Promise.reject(new Error('aus'));
+    return rpc('my_refs', { p_code: CL.code }).then(function (r) { return Array.isArray(r) ? r : []; });
+  };
 
   // Bestenliste und Besuche (Server-Funktionen list_cities / get_city / my_pub, siehe docs/CLOUD.md)
   CL.listCities = function () {

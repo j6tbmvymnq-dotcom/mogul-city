@@ -524,6 +524,7 @@
       if (it.b && it.b.id === movingId) { g.globalAlpha = 0.25; g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h); g.globalAlpha = 1; continue; }
       if (it.b && it.st === 'build') { drawSite(it, t); continue; }
       g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+      if (it.d && it.d.friend) flags(it, now);
     }
     if (V.flat) drawFlat(t, movingId, q);
     if (q) {
@@ -610,9 +611,32 @@
         g.font = '700 ' + fs + 'px -apple-system, "Segoe UI", system-ui, sans-serif'; g.textAlign = 'center';
         g.lineWidth = fs * 0.28; g.lineJoin = 'round'; g.strokeStyle = 'rgba(255,255,255,.9)';
         var ty = cy + s * HH * 0.55;
-        g.strokeText(d.name, cx, ty); g.fillStyle = '#1d2b44'; g.fillText(d.name, cx, ty);
+        var nm = d.friend && G.S.friends ? d.name + ' +' + G.friendBonus() + ' %' : d.name;
+        g.strokeText(nm, cx, ty); g.fillStyle = '#1d2b44'; g.fillText(nm, cx, ty);
       }
       g.globalAlpha = 1;
+    }
+  }
+
+  // Platz der Freundschaft: eine Fahne je Freund an den Masten (vorne zuerst), darüber der Bonus
+  var FLAGCOL = ['#e0533d', '#2b7de9', '#22a455', '#f2b632', '#9b59d0', '#ff7aa8', '#16b5c4', '#ff8a3c', '#4a5fd9', '#7cc242', '#d94f8a', '#3aa0e0'];
+  function flags(it, now) {
+    var n = Math.min(12, G.S.friends || 0), b = it.b, i;
+    var poles = MC.FRIEND_POLES.map(function (p, k) { return { x: p[0], y: p[1], k: k }; }).sort(function (a, c) { return (c.x + c.y) - (a.x + a.y); });
+    for (i = 0; i < n; i++) {
+      var p = poles[i], X = wx(b.x + p.x, b.y + p.y), Y = wy(b.x + p.x, b.y + p.y) - 30;
+      var w = Math.sin(now / 260 + i * 1.7) * 1.4;
+      g.beginPath(); g.moveTo(X + 0.6, Y); g.quadraticCurveTo(X + 8, Y + w, X + 15, Y + 4.5 + w * 0.6);
+      g.quadraticCurveTo(X + 8, Y + 8 + w, X + 0.6, Y + 9.5); g.closePath();
+      g.fillStyle = FLAGCOL[i % FLAGCOL.length]; g.fill(); g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 0.5; g.stroke();
+    }
+    if ((G.S.friends || 0) > 0 && cam.z >= 0.5) {
+      var k = iconScale(), cx = wx(b.x + 1, b.y + 1), cy = wy(b.x + 1, b.y + 1) - it.sp.top + 6;
+      var txt = '+' + G.friendBonus() + ' %';
+      g.font = '800 ' + (12 * k) + 'px -apple-system, "Segoe UI", system-ui, sans-serif'; g.textAlign = 'center';
+      var tw = g.measureText(txt).width + 14 * k;
+      rr(cx - tw / 2, cy - 15 * k, tw, 20 * k, 10 * k); g.fillStyle = 'rgba(15,25,45,.85)'; g.fill();
+      g.fillStyle = '#ffd96a'; g.fillText(txt, cx, cy - 1 * k);
     }
   }
 
