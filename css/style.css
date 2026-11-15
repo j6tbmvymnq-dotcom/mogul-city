@@ -321,3 +321,12 @@ html.vpfix #splash, html.vpfix #install { position: absolute; }
 #goal.done .gic { background: rgba(255, 255, 255, .45); color: #7a5200; }
 #goal.done .gbar { display: none; }
 body.gated #goal, body.visiting #goal { display: none !important; }
+
+/* Home-Bildschirm-App: ruhige, feste Fläche hinter der Statusleiste. iOS legt dort eine Milchglas-Schicht über die
+   Seite; über der bunten Karte wirkt das wie ein unscharfer Schleier. Über einer einfarbigen Fläche sieht es aus wie
+   eine normale App-Kopfzeile. */
+#topbar { display: none; position: absolute; top: 0; left: 0; right: 0; height: var(--st); pointer-events: none; z-index: 3;
+  background: #16233b; }
+html.standalone #topbar { display: block; }
+body.gated #topbar { display: none; }
+#topbar::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(rgba(22, 35, 59, .55), rgba(22, 35, 59, 0)); }

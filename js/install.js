@@ -36,6 +36,7 @@
     if (/[?&]browser=1/.test(location.search)) { try { localStorage.setItem(KEY, '1'); } catch (e) { } return true; }
     try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; }
   }
+  if (I.standalone()) document.documentElement.classList.add('standalone');
   I.needed = function () { return (ios || android) && !I.standalone() && !bypass(); };
 
   // Android/Chrome: eigener Installieren-Knopf
