@@ -150,6 +150,20 @@
     I.refresh();
   };
 
+  // iPhone-App mit durchsichtiger Statusleiste: iOS meldet die Fensterhöhe teils um die Statusleiste zu kurz,
+  // unten bleibt dann ein Streifen frei. Dann die volle Bildschirmhöhe erzwingen (nur iPhone: dort immer Vollbild).
+  function fitPhone() {
+    if (!ios || I.env.ipad || !I.standalone() || !window.screen) return;
+    var portrait = window.matchMedia && window.matchMedia('(orientation: portrait)').matches;
+    var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    var st = document.body.style;
+    if (window.innerHeight < full - 10) { st.height = full + 'px'; st.bottom = 'auto'; } else { st.height = ''; st.bottom = ''; }
+  }
+  I.fitPhone = fitPhone;
+  if (document.body) fitPhone(); else document.addEventListener('DOMContentLoaded', fitPhone);
+  window.addEventListener('resize', fitPhone);
+  window.addEventListener('orientationchange', function () { setTimeout(fitPhone, 150); });
+
   // iPhone/iPad: zusätzlich ein Manifest mit fester Startadresse samt Code (falls iOS die start_url doch liest)
   I.pinCode = function (code) {
     if (!ios || !code) return;

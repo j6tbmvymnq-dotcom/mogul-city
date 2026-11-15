@@ -56,6 +56,7 @@
   CL.push = function (keep) {
     if (!CL.enabled || !ready) return Promise.resolve();
     var S = G.visiting ? G.visiting.own : G.S, rev = (S.syncRev || 0) + 1;
+    if (!S.name) return Promise.resolve();   // erst speichern, wenn die Stadt einen Namen hat (keine leeren Vorschau-Städte)
     if (!G.visiting) S.worthCache = G.netWorth();
     S.syncRev = rev; S.cloudCode = CL.code; S.dirty = false;
     set('speichert');
@@ -91,6 +92,7 @@
   var evDev = '', evErr = 0;
   CL.track = function (ev, val, onceKey) {
     if (!CL.enabled || !CL.code || G.visiting) return;
+    if (!G.S.name && ev !== 'name_frage' && ev !== 'fehler') return;   // noch keine Stadt (z. B. Link-Vorschau)
     if (onceKey) { var S = G.S; S.evs = S.evs || {}; if (S.evs[onceKey]) return; S.evs[onceKey] = 1; G.save(); }
     if (!evDev) {
       var I = MC.Install, e = I && I.env;
@@ -100,6 +102,7 @@
   };
   // Skriptfehler mitzählen (höchstens 3 pro Sitzung) – zeigt, wo es technisch hakt
   window.addEventListener('error', function (e) {
+    if (!e || !e.filename) return;   // „Script error.“ fremder Skripte ohne Aussage
     if (evErr++ < 3) CL.track('fehler', String((e && e.message) || 'unbekannt').slice(0, 40) + ' @' + String((e && e.filename) || '').split('/').pop() + ':' + ((e && e.lineno) || 0));
   });
 
