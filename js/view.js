@@ -164,7 +164,7 @@
 
   // ---------- Eingabe ----------
   function bindInput() {
-    var pts = {}, n = 0, moved = false, start = null, pinch = null, painting = null, dragGhost = false, lastPaint = null;
+    var pts = {}, n = 0, moved = false, start = null, pinch = null, painting = null, dragGhost = false, lastPaint = null, brushing = null;
     function pos(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
 
     cv.addEventListener('pointerdown', function (e) {
@@ -178,12 +178,17 @@
           var cur = G.at(tx, ty);
           if (cur === 0 || cur === -1) painting = { on: cur === 0, start: { x: tx, y: ty } };
         }
+        brushing = null;
+        if (V.mode === 'sign') {   // Vermieten-Pinsel: Wischen über Häuser vermietet sie (Start auf leerem Feld = Karte schieben)
+          var bid = G.at(tx, ty);
+          if (bid > 0 && MC.DEF[G.get(bid).t].kind === 'house') { brushing = { last: { x: tx, y: ty } }; MC.UI.brushSign(G.get(bid)); }
+        }
         if (V.mode === 'place' && V.ghost) {
           var q = V.ghost, s = q.def.size;
           if (t.fx >= q.x - 0.5 && t.fx < q.x + s + 0.5 && t.fy >= q.y - 0.5 && t.fy < q.y + s + 0.5) dragGhost = { dx: t.fx - q.x, dy: t.fy - q.y };
         }
       } else if (n === 2) {
-        painting = null; dragGhost = false; moved = true;
+        painting = null; dragGhost = false; brushing = null; moved = true;
         pinch = pinchState();
       }
       e.preventDefault();
@@ -201,7 +206,9 @@
         if (!moved && Math.hypot(dx, dy) > 9) moved = true;
         if (!moved) return;
         var t = toTile(p.x, p.y), tx = Math.floor(t.fx), ty = Math.floor(t.fy);
-        if (painting) {
+        if (brushing) {
+          brushLine(brushing.last, { x: tx, y: ty }); brushing.last = { x: tx, y: ty };
+        } else if (painting) {
           if (!lastPaint) { paintLine(null, painting.start, painting.on); lastPaint = painting.start; }   // Startfeld mitnehmen
           paintLine(lastPaint, { x: tx, y: ty }, painting.on); lastPaint = { x: tx, y: ty };
         } else if (dragGhost) {
@@ -227,7 +234,7 @@
       delete pts[e.pointerId]; n = Object.keys(pts).length;
       if (n === 0) {
         if (!moved && start) tap(p.x, p.y);
-        start = null; pinch = null; painting = null; dragGhost = false;
+        start = null; pinch = null; painting = null; dragGhost = false; brushing = null;
       } else if (n === 1) {
         var k = Object.keys(pts)[0];
         start = { x: pts[k].x, y: pts[k].y, cx: cam.x, cy: cam.y }; pinch = null; moved = true;
@@ -247,6 +254,14 @@
       document.addEventListener(ev, function (e) { e.preventDefault(); });
     });
 
+    function brushLine(a, b) {   // alle Felder zwischen zwei Fingerpositionen (schnelles Wischen überspringt sonst Häuser)
+      var x = a.x, y = a.y, guard = 0;
+      while ((x !== b.x || y !== b.y) && guard++ < 200) {
+        if (x !== b.x) x += x < b.x ? 1 : -1; else y += y < b.y ? 1 : -1;
+        var id = G.at(x, y);
+        if (id > 0 && MC.DEF[G.get(id).t].kind === 'house') MC.UI.brushSign(G.get(id));
+      }
+    }
     function paintLine(a, b, on) {
       if (!a) { if (G.setRoad(b.x, b.y, on) && on) MC.UI.sound('tick'); return; }
       var x = a.x, y = a.y, guard = 0;
@@ -300,6 +315,7 @@
       return;
     }
     var b = pickIcon(sx, sy) || pick(sx, sy);
+    if (V.mode === 'sign') { if (b && MC.DEF[b.t].kind === 'house') MC.UI.brushSign(b); return; }
     if (G.visiting) { if (b) MC.UI.tapBuilding(b); return; }   // beim Besuch nur ansehen
     if (V.mode === 'bulldoze') {
       if (b) MC.UI.askDemolish(b);
@@ -388,7 +404,7 @@
   V.kick = function () { lastActive = performance.now(); };
   function frame(now) {
     requestAnimationFrame(frame);
-    var busy = now - lastActive < 700 || floats.length || parts.length || itemsDirty || V.mode === 'place' || V.mode === 'road';
+    var busy = now - lastActive < 700 || floats.length || parts.length || itemsDirty || V.mode === 'place' || V.mode === 'road' || V.mode === 'sign';
     if (!busy && now - lastDraw < 50) return;
     lastDraw = now;
     var t0 = performance.now();
@@ -490,6 +506,20 @@
         diamond(tt[0] + 0.06, tt[1] + 0.06, tt[0] + (tt[2] || 1) - 0.06, tt[1] + (tt[2] || 1) - 0.06);
         g.fillStyle = 'rgba(255,214,90,' + pu + ')'; g.fill();
         g.strokeStyle = '#f2b632'; g.lineWidth = 2; g.stroke();
+      }
+    }
+
+    // Vermieten-Pinsel: leere Häuser grün, fällige golden umranden
+    if (V.mode === 'sign') {
+      var tnow = G.now(), pul = 0.55 + 0.25 * Math.sin(now / 260);
+      for (i = 0; i < S.b.length; i++) {
+        var hb = S.b[i], hd = MC.DEF[hb.t];
+        if (hd.kind !== 'house') continue;
+        var hs = G.state(hb, tnow), col = hs === 'empty' || hs === 'expired' ? '60,200,110' : hs === 'ready' ? '242,182,50' : null;
+        if (!col) continue;
+        diamond(hb.x + 0.05, hb.y + 0.05, hb.x + hd.size - 0.05, hb.y + hd.size - 0.05);
+        g.fillStyle = 'rgba(' + col + ',' + (pul * 0.45) + ')'; g.fill();
+        g.strokeStyle = 'rgba(' + col + ',.95)'; g.lineWidth = 2.2; g.stroke();
       }
     }
 

@@ -72,7 +72,7 @@
     if (!text) return;
     $('advisor').innerHTML = advisorPic(a) + '<div class="txt"><b>' + esc(a.name) + '</b>' + esc(text) + '</div>';
     // bei offenem Fenster nur die Stimme (Text steht z. B. im Ziele-Fenster schon, Blase würde Bedienung verdecken)
-    $('advisor').hidden = !$('sheet').hidden;
+    $('advisor').hidden = !$('sheet').hidden || (window.MC.V && MC.V.mode !== 'idle');   // beim Bauen/Vermieten nur die Stimme
     clearTimeout(sayTimer);
     sayTimer = setTimeout(function () { $('advisor').hidden = true; }, Math.max(4000, text.length * 75));
     if (G.S.voice) AS.say(AS.voice(a.id, line));
@@ -86,7 +86,7 @@
     var tries = 0;
     function go() {
       if (G.visiting) return;
-      if ((!$('sheet').hidden || modalOpen) && !G.S.voice && tries++ < 240) return setTimeout(go, 500);
+      if ((!$('sheet').hidden || modalOpen || V.mode !== 'idle') && !G.S.voice && tries++ < 240) return setTimeout(go, 500);
       UI.say(key);
     }
     setTimeout(go, delay || 300);   // erst nach dem Öffnen eines Fensters prüfen (das blendet die Blase sonst gleich wieder aus)
@@ -236,6 +236,8 @@
     $('bar').hidden = place; $('placebar').hidden = !place;
     $('banner').hidden = m === 'idle';
     var txt = { road: 'Straße: tippen oder ziehen. Tippen auf eine Straße entfernt sie.', bulldoze: 'Abriss: Gebäude oder Straße antippen.' }[m];
+    if (m === 'sign' && brush) txt = esc(MC.CONTRACT[brush.cid].name) + ': Häuser antippen oder darüberwischen. Fällige werden gleich kassiert.';
+    if (m === 'idle' && brush) { if (brush.n > 1) UI.toast(brush.n + ' Häuser vermietet: ' + MC.CONTRACT[brush.cid].name); brush = null; }
     if (place) txt = esc(V.ghost.def.name) + (V.ghost.moving ? ' umsetzen' : '') + ': Karte antippen oder ziehen.' +
       (V.ghost.moving && V.ghost.moving.c ? ' Der Mietvertrag startet danach neu.' : '');
     $('bannerText').removeAttribute('data-h');
@@ -358,7 +360,7 @@
         '<span class="m">' + o.n + ' Bewohner · +' + o.xp + ' XP · verfällt nach ' + MC.durShort(G.grace({ k: c.id })) + '</span></button>';
     });
     var cnt = emptyHouses(b).length;
-    h += '</div>' + (cnt > 1 ? '<button class="check' + (applyAll ? ' on' : '') + '" data-do="all"><i></i>Für alle ' + cnt + ' leeren Häuser abschließen' +
+    h += '</div>' + '<button class="check' + (brushNext ? ' on' : '') + '" data-do="brush"><i></i>Danach weitere Häuser antippen oder darüberwischen</button>' + (cnt > 1 ? '<button class="check' + (applyAll ? ' on' : '') + '" data-do="all"><i></i>Für alle ' + cnt + ' leeren Häuser abschließen' +
       (applyAll ? ' – Beträge gelten für alle zusammen' : '') + '</button>' : '');
     return h;
   }
@@ -753,6 +755,13 @@
     var c = MC.CONTRACT[cid];
     var err = G.sign(b, cid);
     if (err) return UI.toast(err, true);
+    if (brushNext) {   // Vermieten-Pinsel: gleichen Vertrag auf weitere Häuser
+      UI.sound('sign'); closeSheet(true); hud();
+      brush = { cid: cid, n: 1, broke: false };
+      V.float(b.x + MC.DEF[b.t].size / 2, b.y + MC.DEF[b.t].size / 2, c.name, '#c8f7d0');
+      V.setMode('sign');
+      return;
+    }
     var n = 1, broke = 0;
     if (applyAll) {
       emptyHouses(b).forEach(function (x) {
@@ -766,6 +775,24 @@
     if (broke) UI.toast(broke + (broke === 1 ? ' Haus bleibt' : ' Häuser bleiben') + ' leer – das Geld reichte nicht für alle Gebühren.', true);
     closeSheet(true); hud();
   }
+  // Vermieten-Pinsel: ein Haus antippen/überwischen -> fällige Miete kassieren und neu vermieten, leere Häuser vermieten
+  var brush = null, brushNext = false;
+  UI.brushSign = function (b) {
+    if (!brush || V.mode !== 'sign') return false;
+    var st = G.state(b), c = MC.CONTRACT[brush.cid], s = MC.DEF[b.t].size;
+    if (st === 'ready') { var r = G.collect(b); if (r && !r.none) UI.sound('collect'); st = G.state(b); }
+    if (st !== 'empty' && st !== 'expired') return false;
+    var err = G.sign(b, brush.cid);
+    if (err) {
+      if (err === 'Nicht genug Geld.' && !brush.broke) { brush.broke = true; UI.toast('Das Geld reicht nicht für weitere Gebühren.', true); }
+      else if (err !== 'Nicht genug Geld.') UI.toast(err, true);
+      return false;
+    }
+    brush.n++; UI.sound('sign'); hud();
+    V.float(b.x + s / 2, b.y + s / 2, '−' + MC.money(G.offer(b, c).cost), '#ffd0c8');
+    $('bannerText').textContent = c.name + ': ' + brush.n + (brush.n === 1 ? ' Haus' : ' Häuser') + ' vermietet – weitere antippen oder darüberwischen.';
+    return true;
+  };
   function noMoney(d) {
     UI.toast('Dafür fehlen dir ' + (G.S.gold < (d.gold || 0) ? (d.gold - G.S.gold) + ' Gold' : MC.money(d.cost - G.S.cash)) + '.', true);
     UI.say('kein_geld', null, 120000);
@@ -801,7 +828,7 @@
       return;
     }
     v = el.getAttribute('data-do');
-    if (v === 'all') { applyAll = !applyAll; if (b) openBuilding(b); return; }
+    if (v === 'all') { applyAll = !applyAll; if (applyAll) brushNext = false; if (b) openBuilding(b); return; }
     if (v === 'replay') return sayMission();
     if (v === 'claim') {
       var cm = G.mission(), rr = G.claimMission();
@@ -853,6 +880,7 @@
       });
     }
     if (v === 'ranking') { MC.Cloud.track('bestenliste'); return openRanking(); }
+    if (v === 'brush') { brushNext = !brushNext; if (brushNext) applyAll = false; return b && openBuilding(b); }
     if (v === 'invite') return openInvite();
     if (v === 'sendinvite') return sendInvite();
     if (v === 'buildfriend') { closeSheet(true); return V.setMode('place', { def: MC.DEF.w_freunde }); }
