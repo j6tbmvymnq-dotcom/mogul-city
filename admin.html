@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#111a2b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mogul Admin">
+<link rel="manifest" href="admin.webmanifest">
+<link rel="apple-touch-icon" href="icons/admin-180.png">
+<title>Mogul Admin</title>
+<style>
+  :root { --bg: #f4f2ec; --card: #fff; --ink: #1d2b44; --mute: #66738a; --line: #e6e2d8; --bar: #2b7de9; --gold: #d99a12; --red: #d93025; --green: #22a455; --soft: #f0ede4; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111a2b; --card: #1a263c; --ink: #e8edf6; --mute: #93a0b8; --line: #2a3853; --bar: #5b9dff; --soft: #22314c; } }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 8px; border-bottom: 1px solid var(--line); }
+  .hrow { display: flex; align-items: center; gap: 10px; max-width: 980px; margin: 0 auto; }
+  .hrow img { width: 34px; height: 34px; border-radius: 9px; }
+  h1 { font-size: 19px; margin: 0; flex: 1; } h2 { font-size: 16px; margin: 24px 0 10px; }
+  .mute { color: var(--mute); font-size: 13px; }
+  .tabs { display: flex; gap: 6px; max-width: 980px; margin: 10px auto 0; }
+  .tabs button { flex: 1; padding: 9px 6px; border-radius: 10px; background: var(--soft); color: var(--ink); font-weight: 700; }
+  .tabs button.on { background: var(--bar); color: #fff; }
+  main { max-width: 980px; margin: 0 auto; padding: 14px 16px calc(env(safe-area-inset-bottom, 0px) + 40px); }
+  button { font: inherit; border: 0; cursor: pointer; color: inherit; }
+  .icon { width: 38px; height: 38px; border-radius: 10px; background: var(--soft); display: grid; place-items: center; color: var(--ink); }
+  .icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .tile b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; } .tile span { color: var(--mute); font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .bar { display: grid; grid-template-columns: minmax(110px, 34%) 1fr 74px; gap: 10px; align-items: center; padding: 4px 0; font-size: 14px; }
+  .bar span { overflow-wrap: anywhere; }
+  .bar i { display: block; height: 12px; border-radius: 6px; background: var(--bar); min-width: 2px; }
+  .bar em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: var(--mute); }
+  .bar.sep { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 10px; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; white-space: nowrap; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); } th { color: var(--mute); font-weight: 600; } td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; border-radius: 6px; padding: 1px 7px; font-size: 12px; background: var(--soft); margin-left: 4px; }
+  .tag.ok { background: rgba(34, 164, 85, .18); color: var(--green); } .tag.warn { background: rgba(217, 154, 18, .2); color: var(--gold); } .tag.red { background: rgba(217, 48, 37, .15); color: var(--red); }
+  .city { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+  .city .top { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .city .top b { font-size: 16px; }
+  .city .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 4px 12px; margin: 8px 0 10px; font-size: 13px; color: var(--mute); }
+  .city .facts b { color: var(--ink); font-weight: 600; }
+  .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 9px 14px; border-radius: 10px; font-weight: 700; font-size: 14px; background: var(--soft); color: var(--ink); text-decoration: none; display: inline-block; }
+  .btn:disabled { opacity: .45; }
+  .btn.blue { background: var(--bar); color: #fff; } .btn.red { background: rgba(217, 48, 37, .14); color: var(--red); } .btn.big { width: 100%; padding: 13px; font-size: 15px; }
+  input[type=search], input[type=password] { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  .login { max-width: 360px; margin: 40px auto; text-align: center; } .login img { width: 88px; height: 88px; border-radius: 20px; margin-bottom: 10px; }
+  .login form { display: flex; gap: 8px; margin-top: 16px; }
+  .err { color: var(--red); margin-top: 10px; }
+  .chk { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; font-size: 14px; color: var(--mute); }
+  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); transform: translateX(-50%); background: #1d2b44; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 9; max-width: calc(100% - 32px); }
+  .stack > * + * { margin-top: 10px; }
+</style>
+</head>
+<body>
+<header id="hdr" hidden>
+  <div class="hrow"><img src="icons/admin-180.png" alt=""><div style="flex:1"><h1>Mogul Admin</h1><div class="mute" id="sub"></div></div>
+    <button class="icon" id="reload" aria-label="Neu laden"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button></div>
+  <div class="tabs"><button data-tab="stat" class="on">Übersicht</button><button data-tab="cities">Städte</button><button data-tab="tools">Werkzeuge</button></div>
+</header>
+<main id="main"></main>
+<script src="js/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = (window.MC_CONFIG || {}).cloud || {}, $ = function (id) { return document.getElementById(id); };
+  var PINKEY = 'mc.statpin', pin = '', data = null, tab = 'stat', withTests = false, filter = '';
+  try { pin = localStorage.getItem(PINKEY) || ''; withTests = localStorage.getItem('mc.admintests') === '1'; } catch (e) { }
+  var GAME = location.href.replace(/admin\.html.*$/, '');
+  var NAMES = { name_frage: 'Namensfrage gesehen', name: 'Stadt benannt', anleitung: 'Home-Bildschirm-Anleitung', app: 'App vom Home-Bildschirm gestartet',
+    browser: 'Spielt im Browser (Ausweg)', tut_1: 'Tutorial Schritt 1', tut_3: 'Tutorial Schritt 3', tut_5: 'Tutorial Schritt 5', tut_8: 'Tutorial Schritt 8',
+    tut_fertig: 'Tutorial geschafft', level_3: 'Level 3', level_5: 'Level 5', level_7: 'Level 7', level_10: 'Level 10', level_15: 'Level 15', level_20: 'Level 20',
+    ziel_5: '5 Ziele', ziel_10: '10 Ziele', ziel_15: '15 Ziele', ziel_20: '20 Ziele', land_2: '1. Grundstück gekauft', land_3: '2. Grundstück gekauft' };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ago(t) { var m = Math.round((Date.now() - new Date(t)) / 60000); return m < 2 ? 'gerade' : m < 60 ? 'vor ' + m + ' Min.' : m < 1440 ? 'vor ' + Math.round(m / 60) + ' Std.' : 'vor ' + Math.round(m / 1440) + ' Tg.'; }
+  function label(k) {
+    if (!k) return ''; if (NAMES[k]) return NAMES[k];
+    var m = /^(\w+?)_(.*)$/.exec(k);
+    return m ? ({ sitzung: 'Sitzung (Level ', level: 'Level ', ziel: 'Ziel ', land: 'Grundstück ', tut: 'Tutorial ', fehler: 'Fehler: ', anzeige: 'Anzeige ', einladen: 'Einladen ' }[m[1]] || m[1] + ' ') + m[2] + (m[1] === 'sitzung' ? ')' : '') : k;
+  }
+  function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
+  function rpc(fn, body) {
+    return fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key }, body: JSON.stringify(body) })
+      .then(function (r) { return r.text().then(function (t) { var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) { } if (!r.ok) throw new Error((j && j.message) || ('HTTP ' + r.status)); return j; }); });
+  }
+  function bars(list, total, sepAt) {
+    var max = Math.max.apply(null, list.map(function (x) { return x.n; }).concat([1]));
+    return '<div class="card">' + list.map(function (x) {
+      var pct = total ? Math.round(100 * x.n / total) + ' %' : '';
+      return '<div class="bar' + (sepAt && sepAt.indexOf(x.k) >= 0 ? ' sep' : '') + '"><span>' + esc(NAMES[x.k] || x.k || 'unbekannt') + '</span><i style="width:' + (100 * x.n / max) + '%"></i><em>' + x.n + (pct ? ' · ' + pct : '') + '</em></div>';
+    }).join('') + '</div>';
+  }
+
+  // ---------- Anmeldung ----------
+  function login(msg) {
+    $('hdr').hidden = true;
+    $('main').innerHTML = '<div class="login"><img src="icons/admin-180.png" alt=""><h1>Mogul Admin</h1><div class="mute">Statistik und Verwaltung</div>' +
+      '<form id="f"><input id="pin" type="password" placeholder="PIN" autocomplete="current-password"><button class="btn blue">Anmelden</button></form><div class="err">' + esc(msg || '') + '</div></div>';
+    $('f').onsubmit = function (e) { e.preventDefault(); pin = $('pin').value.trim(); load(true); };
+  }
+  function load(first) {
+    rpc('mc_stats', { p_pin: pin, p_test: withTests }).then(function (d) {
+      data = d; try { localStorage.setItem(PINKEY, pin); } catch (e) { }
+      $('hdr').hidden = false; render();
+    }).catch(function (e) {
+      if (/PIN/.test(e.message)) { try { localStorage.removeItem(PINKEY); } catch (x) { } login(first ? 'Falsche PIN.' : ''); }
+      else if (first || !data) login(/mc_stats|function/.test(e.message) ? 'Statistik ist auf dem Server noch nicht eingerichtet.' : 'Keine Verbindung: ' + e.message);
+    });
+  }
+
+  // ---------- Ansichten ----------
+  function render() {
+    var d = data;
+    $('sub').textContent = 'Stand ' + new Date(d.stand).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' · ' + (d.teststaedte || 0) + ' Teststädte ' + (withTests ? 'mitgezählt' : 'ausgeblendet');
+    [].forEach.call(document.querySelectorAll('.tabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tab); });
+    $('main').innerHTML = tab === 'stat' ? statView(d) : tab === 'cities' ? cityView(d) : toolView(d);
+    bindView();
+  }
+  function testToggle() { return '<label class="chk"><input type="checkbox" id="tst"' + (withTests ? ' checked' : '') + '> Teststädte mitzählen</label>'; }
+  function statView(d) {
+    var h = testToggle() + '<div class="tiles">' + [['spieler', 'Städte'], ['neu_24h', 'neu (24 Std.)'], ['aktiv_24h', 'aktiv (24 Std.)'], ['aktiv_7d', 'aktiv (7 Tage)'], ['wiederkehrer', 'an 2+ Tagen']]
+      .map(function (t) { return '<div class="tile"><b>' + (d[t[0]] || 0) + '</b><span>' + t[1] + '</span></div>'; }).join('') + '</div>';
+    var tr = d.trichter || [], first = (tr.filter(function (x) { return x.k === 'name_frage'; })[0] || {}).n || d.spieler;
+    h += '<h2>Wie weit kommen die Spieler?</h2>' + bars(tr, first, ['tut_1', 'level_3', 'ziel_5', 'land_2']);
+    h += '<h2>Geräte</h2>' + bars(d.geraete || [], d.spieler);
+    if (d.tage && d.tage.length) h += '<h2>Letzte 14 Tage</h2><div class="card scroll"><table><tr><th>Tag</th><th>aktiv</th><th>neu</th></tr>' +
+      d.tage.map(function (t) { return '<tr><td>' + new Date(t.k).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }) + '</td><td class="n">' + t.spieler + '</td><td class="n">' + t.neu + '</td></tr>'; }).join('') + '</table></div>';
+    h += '<h2>Fehler im Spiel</h2>' + (d.fehler && d.fehler.length ? '<div class="card scroll"><table><tr><th>Meldung</th><th>Anzahl</th><th>Städte</th></tr>' +
+      d.fehler.map(function (f) { return '<tr><td>' + esc(f.k) + '</td><td class="n">' + f.n + '</td><td class="n">' + f.staedte + '</td></tr>'; }).join('') + '</table></div>' : '<div class="card mute">Keine Fehler gemeldet.</div>');
+    return h;
+  }
+  function cityView(d) {
+    var list = (d.staedte || []).filter(function (s) { return !filter || String(s.name).toLowerCase().indexOf(filter) >= 0; });
+    var h = testToggle() + '<input type="search" id="q" placeholder="Stadt suchen" value="' + esc(filter) + '"><div class="mute" style="margin:8px 2px">' + list.length + ' Städte, zuletzt aktive zuerst</div>';
+    if (!list.length) return h + '<div class="card mute">Keine Städte.</div>';
+    return h + list.map(function (s) {
+      var tut = s.tut === 'done' ? '<span class="tag ok">Tutorial fertig</span>' : s.tut == null ? '' : '<span class="tag warn">Tutorial Schritt ' + (+s.tut + 1) + '</span>';
+      var via = s.app ? '<span class="tag ok">App</span>' : s.browser ? '<span class="tag warn">Browser</span>' : '<span class="tag">nicht installiert</span>';
+      return '<div class="city"><div class="top"><b>' + esc(s.name) + '</b>' + (s.test ? '<span class="tag red">Test</span>' : '') + via + tut + '</div>' +
+        '<div class="facts"><div>Level <b>' + (s.lvl || 1) + '</b></div><div>Ziel <b>' + (s.ziel == null ? '–' : s.ziel) + '</b></div><div>Sitzungen <b>' + s.sitzungen + '</b></div><div>Tage <b>' + s.tage + '</b></div>' +
+        '<div>Seit <b>' + ago(s.erst) + '</b></div><div>Zuletzt <b>' + ago(s.zuletzt) + '</b></div><div style="grid-column:1/-1">Gerät <b>' + esc(s.geraet || '–') + '</b> · Letztes: <b>' + esc(label(s.letztes)) + '</b></div></div>' +
+        (s.pub ? '<div class="acts">' + (s.test ? '' : '<button class="btn" data-act="test" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Als Test markieren</button>') +
+          '<button class="btn red" data-act="delete" data-pub="' + s.pub + '" data-name="' + esc(s.name) + '">Löschen</button></div>' : '<div class="mute">Ohne Spielstand (nur Ereignisse)</div>') + '</div>';
+    }).join('');
+  }
+  function toolView(d) {
+    return '<div class="stack">' +
+      '<h2>Teststädte</h2><div class="card"><div class="mute" style="margin-bottom:10px">' + (d.teststaedte || 0) + ' Teststädte auf dem Server. Sie sind für Spieler unsichtbar und zählen nicht in der Statistik.</div>' +
+      '<div class="acts"><a class="btn blue" href="' + GAME + '?test=1" target="_blank" rel="noopener">Neue Teststadt öffnen</a>' +
+      '<button class="btn red" id="purge"' + (d.teststaedte ? '' : ' disabled') + '>Alle Teststädte löschen</button></div></div>' +
+      '<h2>Spiel</h2><div class="card acts"><a class="btn" href="' + GAME + '" target="_blank" rel="noopener">Spiel öffnen</a><a class="btn" href="https://github.com/j6tbmvymnq-dotcom/mogul-city" target="_blank" rel="noopener">Quellcode</a></div>' +
+      '<h2>Anmeldung</h2><div class="card"><button class="btn" id="logout">Abmelden (PIN vergessen)</button></div></div>';
+  }
+  function bindView() {
+    var t = $('tst'); if (t) t.onchange = function () { withTests = t.checked; try { localStorage.setItem('mc.admintests', withTests ? '1' : '0'); } catch (e) { } load(); };
+    var q = $('q'); if (q) q.oninput = function () { filter = q.value.trim().toLowerCase(); var pos = q.selectionStart; render(); var q2 = $('q'); q2.focus(); q2.setSelectionRange(pos, pos); };
+    [].forEach.call(document.querySelectorAll('[data-act]'), function (b) {
+      b.onclick = function () {
+        var act = b.getAttribute('data-act'), name = b.getAttribute('data-name');
+        if (act === 'delete' && !confirm('Stadt „' + name + '“ endgültig löschen? Das lässt sich nicht rückgängig machen. Auch auf dem Gerät des Spielers wird sie danach nicht mehr gespeichert.')) return;
+        if (act === 'test' && !confirm('„' + name + '“ als Teststadt markieren? Sie verschwindet dann aus Bestenliste und Statistik.')) return;
+        b.disabled = true;
+        rpc('admin_city', { p_pin: pin, p_pub: b.getAttribute('data-pub'), p_action: act }).then(function (r) {
+          toast(r === 'ok' ? (act === 'delete' ? '„' + name + '“ gelöscht' : '„' + name + '“ ist jetzt Teststadt') : 'Ging nicht: ' + r); load();
+        }).catch(function (e) { b.disabled = false; toast(/admin_city|function/.test(e.message) ? 'Admin-Funktionen sind auf dem Server noch nicht eingerichtet.' : 'Fehler: ' + e.message); });
+      };
+    });
+    var pg = $('purge'); if (pg) pg.onclick = function () {
+      if (!confirm('Alle ' + (data.teststaedte || 0) + ' Teststädte endgültig löschen?')) return;
+      rpc('admin_purge_tests', { p_pin: pin }).then(function (n) { toast(n + ' Teststädte gelöscht'); load(); })
+        .catch(function (e) { toast(/admin_purge|function/.test(e.message) ? 'Admin-Funktionen sind auf dem Server noch nicht eingerichtet.' : 'Fehler: ' + e.message); });
+    };
+    var lo = $('logout'); if (lo) lo.onclick = function () { try { localStorage.removeItem(PINKEY); } catch (e) { } pin = ''; data = null; login(); };
+  }
+  [].forEach.call(document.querySelectorAll('.tabs button'), function (b) { b.onclick = function () { tab = b.getAttribute('data-tab'); render(); window.scrollTo(0, 0); }; });
+  $('reload').onclick = function () { load(); toast('Aktualisiert'); };
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && data) load(); });
+  setInterval(function () { if (!document.hidden && data && tab !== 'cities') load(); }, 60000);
+  if (pin) load(true); else login();
+})();
+</script>
+</body>
+</html>
