@@ -512,7 +512,7 @@
 
   function toggle(key, label) { return '<button class="check' + (G.S[key] ? ' on' : '') + '" data-tog="' + key + '"><i></i>' + label + '</button>'; }
   function openMenu() {
-    var h = (MC.Cloud.enabled && !G.inTut() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn" style="flex:1" data-do="invite">Freunde einladen' + (G.S.friends ? ' (' + G.S.friends + ')' : ' – +' + MC.FRIEND_FIRST + ' %') + '</button></div>' : '') +
+    var h = (MC.Cloud.enabled && !G.inTut() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn two" style="flex:1" data-do="invite"><span>Freunde einladen</span><small>' + (G.S.friends ? G.S.friends + (G.S.friends === 1 ? ' Freund' : ' Freunde') + ' · jetzt ' + G.friendBonus() + ' % mehr Einnahmen' : 'Erster Freund bringt ' + MC.FRIEND_FIRST + ' % mehr Einnahmen') + '</small></button></div>' : '') +
       toggle('sound', 'Soundeffekte') + toggle('music', 'Musik') + toggle('voice', 'Berater-Stimme') +
       toggle('ignoreMute', 'Ton auch bei Stummschaltung') +
       (MC.Cloud.enabled ? '<h4>Dein Stadt-Code</h4><div class="codebox">' + esc(MC.Cloud.code) + '</div>' +
