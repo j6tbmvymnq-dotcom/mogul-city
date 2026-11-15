@@ -405,7 +405,7 @@
   function frame(now) {
     requestAnimationFrame(frame);
     var busy = now - lastActive < 700 || floats.length || parts.length || itemsDirty || V.mode === 'place' || V.mode === 'road' || V.mode === 'sign';
-    if (!busy && now - lastDraw < 50) return;
+    if (!busy && now - lastDraw < (life.on ? 33 : 50)) return;
     lastDraw = now;
     var t0 = performance.now();
     draw(now);
@@ -471,6 +471,8 @@
         }
       }
     } else { g.fillStyle = '#3f9ec4'; g.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0); }
+
+    if (!V.flat && !V.dbg.noLife) boats(now);
 
     // Straßen: Kachel-Asset strasse_<maske> (N=1, O=2, S=4, W=8) oder gezeichnet
     var roads = S.roads, plain = [];
@@ -548,9 +550,11 @@
       g.globalAlpha = 0.85; g.drawImage(gs.c, wx(q.x, q.y) - gs.ox, wy(q.x, q.y) - gs.oy, gs.w, gs.h); g.globalAlpha = 1;
       gDrawn = true;
     }
+    var amb = V.flat || V.dbg.noLife ? [] : lifeStep(now), ai = 0;
     for (i = 0; i < (V.dbg.noItems ? 0 : items.length); i++) {
       var it = items[i], sp = it.sp;
       if (V.flat) continue;
+      while (ai < amb.length && amb[ai].d < it.depth) drawAmb(amb[ai++], now, vx0, vx1, vy0, vy1);
       if (!gDrawn && it.depth > gDepth) drawGhost();
       if (it.sx + sp.w < vx0 || it.sx - sp.w > vx1 || it.sy + sp.h < vy0 || it.sy - sp.oy > vy1) continue;
       if (it.b && it.b.id === movingId) { g.globalAlpha = 0.25; g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h); g.globalAlpha = 1; continue; }
@@ -558,6 +562,8 @@
       g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
       if (it.d && it.d.friend) flags(it, now);
     }
+    while (ai < amb.length) drawAmb(amb[ai++], now, vx0, vx1, vy0, vy1);
+    if (!V.flat && !V.dbg.noLife) birds(now, vx0, vx1, vy0, vy1);
     if (V.flat) drawFlat(t, movingId, q);
     if (q) {
       if (!gDrawn && !V.flat) drawGhost();
@@ -669,6 +675,122 @@
       var tw = g.measureText(txt).width + 14 * k;
       rr(cx - tw / 2, cy - 15 * k, tw, 20 * k, 10 * k); g.fillStyle = 'rgba(15,25,45,.85)'; g.fill();
       g.fillStyle = '#ffd96a'; g.fillText(txt, cx, cy - 1 * k);
+    }
+  }
+
+  // ---------- Leben in der Stadt: Autos, Fußgänger, Boote, Vögel ----------
+  // Autos folgen dem Straßennetz (Rechtsverkehr, an Kreuzungen zufällig abbiegen, keine Kehrtwende außer in Sackgassen).
+  // Fußgänger laufen am Straßenrand, ihre Zahl wächst mit den Bewohnern. Alles nur Deko, ohne Einfluss aufs Spiel.
+  var life = { on: false, cars: [], peds: [], last: 0, sig: '' };
+  var DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];   // N O S W in Feldern
+  var CARCOL = ['#e0533d', '#2b7de9', '#f2b632', '#ffffff', '#22a455', '#3a3f4a', '#9b59d0', '#ff8a3c', '#16b5c4', '#c9c9c9'];
+  var SHIRT = ['#e0533d', '#2b7de9', '#f2b632', '#22a455', '#9b59d0', '#ff7aa8', '#ffffff', '#16b5c4'];
+  function roadNb(x, y) { var o = []; for (var k = 0; k < 4; k++) if (G.isRoad(x + DIRS[k][0], y + DIRS[k][1])) o.push(k); return o; }
+  function spawnOn(list, mk) {
+    var R = G.S.roads, tries = 12;
+    while (tries--) {
+      var id = R[Math.floor(Math.random() * R.length)], x = id % N, y = (id - x) / N, nb = roadNb(x, y);
+      if (nb.length) { list.push(mk(x, y, nb[Math.floor(Math.random() * nb.length)])); return; }
+    }
+  }
+  function nextDir(x, y, dir) {
+    var nb = roadNb(x, y), back = (dir + 2) % 4, opts = nb.filter(function (k) { return k !== back; });
+    if (!opts.length) return nb.length ? back : -1;
+    if (opts.indexOf(dir) >= 0 && Math.random() < 0.6) return dir;   // meistens geradeaus
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+  function lifeStep(now) {
+    var S = G.S, dt = Math.min(0.1, (now - (life.last || now)) / 1000); life.last = now;
+    var roads = S.roads.length, tenants = 0;
+    if (roads < 3) { life.on = false; life.cars.length = 0; life.peds.length = 0; return []; }
+    S.b.forEach(function (b) { if (MC.DEF[b.t].kind === 'house' && b.c) tenants += b.c.n || 0; });
+    var wantCars = Math.min(36, Math.floor(roads / 7) + (tenants > 0 ? 1 : 0)), wantPeds = Math.min(40, Math.floor(tenants / 6) + (tenants > 0 ? 1 : 0));
+    var sig = S.roads.length + ':' + (G.visiting ? 'v' : 'o');
+    if (sig !== life.sig) { life.sig = sig; life.cars = life.cars.filter(function (c) { return G.isRoad(c.x, c.y); }); life.peds = life.peds.filter(function (c) { return G.isRoad(c.x, c.y); }); }
+    while (life.cars.length < wantCars) spawnOn(life.cars, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.9 + Math.random() * 0.6, col: CARCOL[Math.floor(Math.random() * CARCOL.length)], car: 1 }; });
+    while (life.peds.length < wantPeds) spawnOn(life.peds, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.22 + Math.random() * 0.12, col: SHIRT[Math.floor(Math.random() * SHIRT.length)], side: Math.random() < 0.5 ? 1 : -1, ph: Math.random() * 6 }; });
+    life.cars.length = Math.min(life.cars.length, wantCars); life.peds.length = Math.min(life.peds.length, wantPeds);
+    life.on = life.cars.length + life.peds.length > 0;
+    var out = [];
+    function move(o, i, list) {
+      o.t += o.v * dt;
+      while (o.t >= 1) {
+        o.t -= 1; o.x += DIRS[o.dir][0]; o.y += DIRS[o.dir][1];
+        if (!G.isRoad(o.x, o.y)) { list.splice(i, 1); return false; }
+        var nd = nextDir(o.x, o.y, o.dir); if (nd < 0) { list.splice(i, 1); return false; }
+        o.dir = nd;
+      }
+      var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1];
+      // Mitte des Feldes -> Mitte des nächsten Feldes, versetzt auf die rechte Spur bzw. den Gehweg
+      var off = o.car ? 0.2 : 0.43 * o.side;
+      o.fx = o.x + 0.5 + dx * o.t - dy * off; o.fy = o.y + 0.5 + dy * o.t + dx * off;
+      out.push({ o: o, d: o.fx + o.fy });
+      return true;
+    }
+    for (var i = life.cars.length - 1; i >= 0; i--) move(life.cars[i], i, life.cars);
+    for (i = life.peds.length - 1; i >= 0; i--) move(life.peds[i], i, life.peds);
+    out.sort(function (a, b) { return a.d - b.d; });
+    return out;
+  }
+  function P(x, y, z) { return [wx(x, y), wy(x, y) - (z || 0)]; }
+  function quad(a, b, c, d, fill) { g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]); g.lineTo(d[0], d[1]); g.closePath(); g.fillStyle = fill; g.fill(); }
+  function shade(hex, f) { var n = parseInt(hex.slice(1), 16), r = n >> 16, gg = (n >> 8) & 255, b = n & 255; return 'rgb(' + Math.round(r * f) + ',' + Math.round(gg * f) + ',' + Math.round(b * f) + ')'; }
+  function box(x0, y0, x1, y1, z0, z1, col) {   // sichtbare Seiten eines achsparallelen Quaders: vorne-links (y1), vorne-rechts (x1), oben
+    quad(P(x0, y1, z0), P(x1, y1, z0), P(x1, y1, z1), P(x0, y1, z1), shade(col, 0.82));
+    quad(P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1), shade(col, 0.62));
+    quad(P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1), col);
+  }
+  function drawAmb(a, now, vx0, vx1, vy0, vy1) {
+    var o = a.o, sx = wx(o.fx, o.fy), sy = wy(o.fx, o.fy);
+    if (sx < vx0 - 20 || sx > vx1 + 20 || sy < vy0 - 20 || sy > vy1 + 20) return;
+    if (o.car) {
+      var along = o.dir % 2 === 1, L = 0.21, W = 0.11, x0, x1, y0, y1;   // halbe Länge/Breite in Feldern
+      if (along) { x0 = o.fx - L; x1 = o.fx + L; y0 = o.fy - W; y1 = o.fy + W; } else { x0 = o.fx - W; x1 = o.fx + W; y0 = o.fy - L; y1 = o.fy + L; }
+      g.beginPath(); g.ellipse(sx, sy + 1, 9, 4.5, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.18)'; g.fill();
+      box(x0, y0, x1, y1, 1.5, 6, o.col);
+      // Kabine leicht nach hinten versetzt, Scheiben dunkel
+      var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1], cs = 0.6;
+      var cx0 = o.fx - (o.fx - x0) * cs - dx * 0.03, cx1 = o.fx + (x1 - o.fx) * cs - dx * 0.03, cy0 = o.fy - (o.fy - y0) * cs - dy * 0.03, cy1 = o.fy + (y1 - o.fy) * cs - dy * 0.03;
+      box(cx0, cy0, cx1, cy1, 6, 9.5, '#2d4a6e');
+      quad(P(cx0, cy0, 9.5), P(cx1, cy0, 9.5), P(cx1, cy1, 9.5), P(cx0, cy1, 9.5), o.col);
+    } else {
+      var bob = Math.abs(Math.sin(now / 160 + o.ph)) * 1.2, step = Math.sin(now / 160 + o.ph) * 1.1;
+      g.beginPath(); g.ellipse(sx, sy, 2.6, 1.3, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.2)'; g.fill();
+      g.strokeStyle = '#3a3f4a'; g.lineWidth = 1.1; g.beginPath(); g.moveTo(sx - 0.7, sy - 3.5); g.lineTo(sx - 0.7 + step * 0.6, sy); g.moveTo(sx + 0.7, sy - 3.5); g.lineTo(sx + 0.7 - step * 0.6, sy); g.stroke();
+      g.fillStyle = o.col; g.fillRect(sx - 1.6, sy - 7.6 - bob, 3.2, 4.4);
+      g.beginPath(); g.arc(sx, sy - 9.2 - bob, 1.5, 0, Math.PI * 2); g.fillStyle = '#f0c8a0'; g.fill();
+    }
+  }
+  // Boote: ziehen auf einem Rundkurs um die Insel (Felder außerhalb der Karte)
+  var BOATS = [{ p: 0.05, v: 0.006, col: '#ffffff' }, { p: 0.4, v: 0.004, col: '#e0533d' }, { p: 0.72, v: 0.005, col: '#f2b632' }];
+  function boats(now) {
+    var ring = 2.6, lo = -ring, hi = N + ring, len = (hi - lo) * 4, t = now / 1000;
+    BOATS.forEach(function (b, k) {
+      var s = ((b.p + t * b.v) % 1 + 1) % 1 * len, side = Math.floor(s / (hi - lo)), u = s % (hi - lo), x, y, dx, dy;
+      if (side === 0) { x = lo + u; y = lo; dx = 1; dy = 0; } else if (side === 1) { x = hi; y = lo + u; dx = 0; dy = 1; }
+      else if (side === 2) { x = hi - u; y = hi; dx = -1; dy = 0; } else { x = lo; y = hi - u; dx = 0; dy = -1; }
+      var sx = wx(x, y), sy = wy(x, y) + Math.sin(t * 2 + k) * 1.2;
+      // Kielwasser
+      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.4;
+      var bx = wx(x - dx * 0.9, y - dy * 0.9), by = wy(x - dx * 0.9, y - dy * 0.9);
+      g.beginPath(); g.moveTo(sx, sy); g.lineTo(bx - 4, by + 2); g.moveTo(sx, sy); g.lineTo(bx + 4, by + 2); g.stroke();
+      var along = dx !== 0, L = 0.38, W = 0.14;
+      var x0 = along ? x - L : x - W, x1 = along ? x + L : x + W, y0 = along ? y - W : y - L, y1 = along ? y + W : y + L;
+      box(x0, y0, x1, y1, -1, 4, b.col);
+      box(x - 0.1 - dx * 0.08, y - 0.1 - dy * 0.08, x + 0.1 - dx * 0.08, y + 0.1 - dy * 0.08, 4, 9, '#dfe7f2');
+    });
+  }
+  // Vogelschwarm: ab und zu ein paar „V“ quer über den sichtbaren Ausschnitt
+  var flock = null;
+  function birds(now, vx0, vx1, vy0, vy1) {
+    if (!flock) { if (Math.random() < 0.0015) flock = { t0: now, y: vy0 + (vy1 - vy0) * (0.15 + Math.random() * 0.4), dir: Math.random() < 0.5 ? 1 : -1, n: 3 + Math.floor(Math.random() * 4) }; return; }
+    var span = vx1 - vx0, k = (now - flock.t0) / 14000;
+    if (k > 1) { flock = null; return; }
+    var bx = flock.dir > 0 ? vx0 - 40 + (span + 80) * k : vx1 + 40 - (span + 80) * k, z = 1 / Math.max(0.5, cam.z);
+    g.strokeStyle = 'rgba(30,40,55,.75)'; g.lineWidth = 1.3 * z; g.lineCap = 'round';
+    for (var i = 0; i < flock.n; i++) {
+      var x = bx - flock.dir * i * 14 * z, y = flock.y + (i % 2 ? 7 : -3) * z + Math.sin(now / 300 + i) * 2 * z, w = Math.sin(now / 120 + i) * 2.2 * z;
+      g.beginPath(); g.moveTo(x - 5 * z, y - w); g.quadraticCurveTo(x - 2 * z, y - 1.5 * z, x, y); g.quadraticCurveTo(x + 2 * z, y - 1.5 * z, x + 5 * z, y - w); g.stroke();
     }
   }
 
