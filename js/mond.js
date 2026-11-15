@@ -7,7 +7,7 @@
   'use strict';
   var MC = window.MC, G = MC.G, MIN = MC.MIN, H = MC.H;
   // Noch nicht live: erst wenn Fables Grafiken da sind auf true setzen. Zum Testen: Spiel mit ?mond=1 öffnen.
-  MC.MOON_LIVE = false;
+  MC.MOON_LIVE = true;
   var TRY = typeof location !== 'undefined' && /[?&]mond=1/.test(location.search);
 
   MC.MOON = {

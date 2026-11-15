@@ -1,5 +1,5 @@
 {
- "version": "b43996cb",
+ "version": "bc517d85",
  "sprites": {
   "hq": "hq.svg",
   "bungalow": "bungalow.svg",
@@ -123,6 +123,36 @@
   "bild_tagesbonus": "bild_tagesbonus.svg",
   "bild_levelup": "bild_levelup.svg",
   "bild_land": "bild_land.svg",
+  "mond_panorama": "mond_panorama.svg",
+  "mond_bagger": "mond_bagger.svg",
+  "mond_eis": "mond_eis.svg",
+  "mond_kuppel": "mond_kuppel.svg",
+  "mond_mine": "mond_mine.svg",
+  "mond_werk": "mond_werk.svg",
+  "mond_raff": "mond_raff.svg",
+  "mond_hafen": "mond_hafen.svg",
+  "mond_mega": "mond_mega.svg",
+  "mond_rakete": "mond_rakete.svg",
+  "mond_bau": "mond_bau.svg",
+  "mond_fuel": "mond_fuel.svg",
+  "mond_he3": "mond_he3.svg",
+  "mond_kol": "mond_kol.svg",
+  "mond_samm_meteor_1": "mond_samm_meteor_1.svg",
+  "mond_samm_meteor_2": "mond_samm_meteor_2.svg",
+  "mond_samm_meteor_3": "mond_samm_meteor_3.svg",
+  "mond_samm_meteor_4": "mond_samm_meteor_4.svg",
+  "mond_samm_meteor_5": "mond_samm_meteor_5.svg",
+  "mond_samm_andenken_1": "mond_samm_andenken_1.svg",
+  "mond_samm_andenken_2": "mond_samm_andenken_2.svg",
+  "mond_samm_andenken_3": "mond_samm_andenken_3.svg",
+  "mond_samm_andenken_4": "mond_samm_andenken_4.svg",
+  "mond_samm_andenken_5": "mond_samm_andenken_5.svg",
+  "mond_samm_proben_1": "mond_samm_proben_1.svg",
+  "mond_samm_proben_2": "mond_samm_proben_2.svg",
+  "mond_samm_proben_3": "mond_samm_proben_3.svg",
+  "mond_samm_proben_4": "mond_samm_proben_4.svg",
+  "mond_samm_proben_5": "mond_samm_proben_5.svg",
+  "bild_mond": "bild_mond.svg",
   "app_icon": "app_icon.svg"
  },
  "sounds": {
@@ -147,8 +177,12 @@
   "set": "set.mp3",
   "gold": "gold.mp3",
   "error": "error.mp3",
+  "mond_tap": "mond_tap.mp3",
+  "mond_start": "mond_start.mp3",
+  "mond_bau": "mond_bau.mp3",
   "musik_1": "musik_1.mp3",
-  "musik_2": "musik_2.mp3"
+  "musik_2": "musik_2.mp3",
+  "musik_mond": "musik_mond.mp3"
  },
  "voice": {
   "viktor": {

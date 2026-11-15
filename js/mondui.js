@@ -44,6 +44,8 @@
       '<div class="mpan" id="mpan"></div>' +
       '<div class="mbody" id="mbody"></div>';
     el.onclick = click;
+    el.addEventListener('pointerdown', function () { touching = true; });
+    ['pointerup', 'pointercancel'].forEach(function (ev) { el.addEventListener(ev, function () { setTimeout(function () { touching = false; }, 150); }); });
     return el;
   }
   function render() {
@@ -84,13 +86,22 @@
         (!crewOk ? '<span class="mwarn">Zu wenig Arbeiter</span>' : '') + '</div></div>';
     });
     $('mbody').innerHTML = h;
-    res(); sig = stateSig();
+    $('mres').innerHTML = ''; res(); sig = stateSig();
   }
+  // Rohstoffleiste einmal aufbauen, danach nur die Zahlen ändern (Bilder nicht ständig neu laden)
   function res() {
-    var m = G.moon();
-    $('mres').innerHTML = ['bau', 'fuel', 'he3'].map(function (r) { return '<span>' + ric(r) + num(m[r]) + '</span>'; }).join('') + '<span>' + ric('kol') + num(G.moonHomes()) + '</span>';
+    var m = G.moon(), el = $('mres');
+    if (!el.firstChild) el.innerHTML = ['bau', 'fuel', 'he3', 'kol'].map(function (r) { return '<span>' + ric(r) + '<b data-r="' + r + '"></b></span>'; }).join('');
+    [].forEach.call(el.querySelectorAll('[data-r]'), function (b) { var r = b.getAttribute('data-r'), v = num(r === 'kol' ? G.moonHomes() : m[r]); if (b.textContent !== v) b.textContent = v; });
   }
-  function stateSig() { var m = G.moon(); return [Math.floor(m.bau), Math.floor(m.fuel), Math.floor(m.he3), !!m.rocket, G.S.cash > 0 ? Math.floor(Math.log10(G.S.cash + 1) * 4) : 0].join(':') + JSON.stringify(m.b); }
+  // Neu aufbauen nur, wenn sich etwas Sichtbares an Knöpfen/Zuständen ändert – nicht bei jedem Rohstoff-Zuwachs
+  function stateSig() {
+    var m = G.moon(), gl = G.moonGoal(), p = G.moonRocketPlan();
+    var afford = M.B.map(function (b) { var k = qty === 'max' ? Math.max(1, G.moonMaxBuy(b.id)) : qty, c = G.moonCost(b.id, k);
+      return k + (Object.keys(c).every(function (r) { return m[r] >= c[r]; }) ? 'y' : 'n') + (!b.crew || G.moonFreeCrew() >= b.crew * k ? 'y' : 'n'); }).join(',');
+    return JSON.stringify(m.b) + '|' + !!m.rocket + '|' + (gl ? gl.idx + (gl.done ? 'd' : '') + gl.have : '-') + '|' + JSON.stringify(m.coll || {}) + '|' + qty + '|' + afford + '|' + (p.cargo > 0 && m.fuel >= p.fuel) + '|' + p.cargo;
+  }
+  var touching = false;
   function loop() {
     if (!open) return;
     var got = G.moonTick();
@@ -100,7 +111,7 @@
     [].forEach.call(document.querySelectorAll('#moon [data-mp]'), function (e) { e.style.width = Math.round(G.moonProgress(e.getAttribute('data-mp')) * 100) + '%'; });
     [].forEach.call(document.querySelectorAll('#moon [data-rprog]'), function (e) { var a = e.getAttribute('data-rprog').split(','); e.style.width = Math.min(100, Math.round(100 * (t - a[0]) / (a[1] - a[0]))) + '%'; });
     [].forEach.call(document.querySelectorAll('#moon [data-arrive]'), function (e) { e.textContent = MC.dur(Math.max(0, +e.getAttribute('data-arrive') - t)); });
-    var s = stateSig(); if (s !== sig) render(); else res();
+    var s = stateSig(); if (s !== sig && !touching) render(); else res();
     raf = requestAnimationFrame(loop);
   }
   function click(e) {
