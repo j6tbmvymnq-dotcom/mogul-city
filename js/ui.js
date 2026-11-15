@@ -48,10 +48,12 @@
     gold: function () { tone(1760, 0, 0.1, 'sine', 0.08); tone(2637, 0.05, 0.25, 'sine', 0.06); },
     error: function () { tone(150, 0, 0.18, 'sawtooth', 0.06); }
   };
-  // Töne in drei Gruppen, einzeln abschaltbar: Tastentöne, Kassieren, übrige Spiel-Effekte
-  var SND_GROUP = { tap: 'sndTap', open: 'sndTap', close: 'sndTap', collect: 'sndCash', collect_all: 'sndCash', shop_collect: 'sndCash' };
+  // Ton nur, wenn etwas passiert (Bauen, Kassieren, Level …) – keine Klicktöne für Knöpfe und Fenster.
+  // Kassieren ist einzeln abschaltbar, alles andere über „Spiel-Effekte“.
+  var SND_SILENT = { tap: 1, open: 1, close: 1 };
+  var SND_GROUP = { collect: 'sndCash', collect_all: 'sndCash', shop_collect: 'sndCash' };
   UI.sound = function (id) {
-    if (G.S[SND_GROUP[id] || 'sound'] === false) return;
+    if (SND_SILENT[id] || G.S[SND_GROUP[id] || 'sound'] === false) return;
     try { if (!AS.play(id) && SYNTH[id]) SYNTH[id](); } catch (e) { }
   };
 
@@ -528,7 +530,7 @@
   function toggle(key, label) { return '<button class="check' + (G.S[key] ? ' on' : '') + '" data-tog="' + key + '"><i></i>' + label + '</button>'; }
   function openMenu() {
     var h = (MC.Cloud.enabled && !G.inTut() ? '<div class="row" style="margin-bottom:12px"><button class="btn goldbtn two" style="flex:1" data-do="invite"><span>Freunde einladen</span><small>' + (G.S.friends ? G.S.friends + (G.S.friends === 1 ? ' Freund' : ' Freunde') + ' · jetzt ' + G.friendBonus() + ' % mehr Einnahmen' : 'Erster Freund bringt ' + MC.FRIEND_FIRST + ' % mehr Einnahmen') + '</small></button></div>' : '') +
-      '<h4>Töne</h4>' + toggle('sndTap', 'Tastentöne') + toggle('sndCash', 'Kassieren-Geräusch') + toggle('sound', 'Spiel-Effekte (Bauen, Level, Ziele …)') +
+      '<h4>Töne</h4>' + toggle('sndCash', 'Kassieren-Geräusch') + toggle('sound', 'Spiel-Effekte (Bauen, Level, Ziele …)') +
       toggle('music', 'Musik') + toggle('voice', 'Berater-Stimme') +
       toggle('ignoreMute', 'Ton auch bei Stummschaltung') +
       (MC.Cloud.enabled ? '<h4>Dein Stadt-Code</h4><div class="codebox">' + esc(MC.Cloud.code) + '</div>' +
@@ -855,7 +857,6 @@
       if (v === 'ignoreMute') AS.setIgnoreMute(S.ignoreMute);
       if (v === 'sound' && S.sound) UI.sound('built');
       if (v === 'sndCash' && S.sndCash) UI.sound('collect');
-      if (v === 'sndTap' && S.sndTap) UI.sound('tap');
       return;
     }
     if ((v = el.getAttribute('data-set'))) {
