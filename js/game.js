@@ -28,7 +28,7 @@
       st: { roads: 0, signed: 0, collected: 0, shopCollected: 0, expired: 0, earned: 0, sets: 0 },
       coll: {}, advisor: '', movePass: 0,
       tut: 0, seen: {}, sessions: 1, lastSeen: Date.now(), firstDrop: false,
-      sound: true, music: true, voice: true, ignoreMute: true, created: Date.now()
+      sound: true, sndTap: true, sndCash: true, music: true, voice: true, ignoreMute: true, created: Date.now()
     };
   }
   // ältere Spielstände auf den aktuellen Aufbau bringen
