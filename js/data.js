@@ -201,6 +201,9 @@
   ];
   MC.DROP_HOUSE = 0.06;    // Grundchance je kassierter Miete (+0,5 % je Haus-Stufe)
   MC.DROP_SHOP = 0.03;
+  MC.DROP_PAUSE = [15, 45];   // Minuten Pause nach einem Fund, bis die erste Sammlung eingelöst ist
+  MC.DROP_PAUSE_LATER = [30, 90];   // danach wie bisher
+  MC.DROP_SMART = 0.6;        // bis zur ersten Sammlung: Anteil der Funde, die ein fehlendes Stück der besten Sammlung sind
 
   /* Soundeffekte: assets/sounds/<id>.mp3 (fehlt eine Datei, spielt ein Ersatzklang) */
   MC.SOUNDS = [
@@ -336,7 +339,7 @@
     { t: 'Einkaufsstraße', lvl: 2, d: 'Besitze 3 fertige Gewerbe.', check: function (S) { return [count(S, function (b, d) { return d.kind === 'shop' && done(b); }), 3]; }, r: { cash: 150000, gold: 1 } },
     { t: 'Volles Haus', d: 'Beherberge gleichzeitig 100 Bewohner.', check: function (S, G) { return [G.totalTenants(), 100]; }, r: { cash: 150000 } },
     { t: 'Ein Denkmal für mich', lvl: 7, d: 'Errichte das Gründerdenkmal (Weltwunder).', check: function (S) { return [count(S, function (b, d) { return d.id === 'w_statue' && done(b); }), 1]; }, r: { cash: 100000, gold: 2 } },
-    { t: 'Sammelleidenschaft', lvl: 6, d: 'Beim Kassieren findest du manchmal Sammelstücke. Vervollständige eine Sammlung in deiner Firmenzentrale.', check: function (S) { return [S.st.sets || 0, 1]; }, r: { cash: 150000, gold: 2 } },
+    { t: 'Sammelleidenschaft', lvl: 6, d: 'Beim Kassieren findest du manchmal Sammelstücke. Vervollständige eine Sammlung in deiner Firmenzentrale.', check: function (S) { if (S.st.sets) return [5, 5]; var m = 0; Object.keys(S.coll || {}).forEach(function (k) { m = Math.max(m, S.coll[k].filter(function (v) { return v > 0; }).length); }); return [m, 5]; }, r: { cash: 150000, gold: 2 } },
     { t: 'Die erste Million', d: 'Erreiche einen Firmenwert von 1 Million $.', check: function (S, G) { return [G.netWorth(), 1000000]; }, r: { cash: 100000, gold: 3 } },
     { t: 'Aufhübschen III', d: 'Bringe ein Haus auf mindestens 60 % Deko-Bonus.', check: function (S, G) { return [G.maxBonus(), 60]; }, r: { cash: 200000 } },
     { t: 'Großgrundbesitzer', lvl: 5, d: 'Besitze 5 Grundstücke.', check: function (S) { return [S.land.length, 5]; }, r: { cash: 1500000, gold: 2 } },

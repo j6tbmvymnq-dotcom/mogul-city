@@ -530,12 +530,13 @@
       addXp(res.xp);
       emit('collect', { b: b, cash: res.cash, xp: res.xp });
       var chance = d.kind === 'house' ? MC.DROP_HOUSE + d.tier * 0.005 : MC.DROP_SHOP;
-      // Sammelstücke bleiben selten: nach jedem Fund 30–90 Min. Pause (sonst würfelt jedes kassierte Haus alle 3 Min.)
+      // Sammelstücke bleiben selten: nach jedem Fund eine Pause (MC.DROP_PAUSE), sonst würfelt jedes kassierte Haus alle 3 Min.
       if (G.unlocked('sets') && G.now() >= (S.nextDrop || 0)) {
         if (!S.firstDrop) chance = 1;          // erstes Sammelstück gleich nach der Freischaltung
         if (Math.random() < chance) {
           res.found = drop(b); S.firstDrop = true;
-          S.nextDrop = G.now() + (30 + Math.random() * 60) * MC.MIN;
+          var pz = S.st.sets > 0 ? MC.DROP_PAUSE_LATER : MC.DROP_PAUSE;
+          S.nextDrop = G.now() + (pz[0] + Math.random() * (pz[1] - pz[0])) * MC.MIN;
         }
       }
       G.save();
@@ -548,6 +549,12 @@
     var sets = MC.COLLECTIONS.filter(function (c) { return c.lvl <= S.lvl; });
     if (!sets.length) return null;
     var c = sets[Math.floor(Math.random() * sets.length)], i = Math.floor(Math.random() * c.items.length);
+    // meistens ein fehlendes Stück der am weitesten gesammelten Sammlung – sonst dauert die erste volle Sammlung ewig
+    if (!(S.st.sets > 0) && Math.random() < MC.DROP_SMART) {   // nur bis zur ersten eingelösten Sammlung (Ziel „Sammelleidenschaft“)
+      var best = null, bn = -1;
+      sets.forEach(function (x) { var a = S.coll[x.id] || [0, 0, 0, 0, 0], n = a.filter(function (v) { return v > 0; }).length; if (n < 5 && n > bn) { bn = n; best = x; } });
+      if (best) { var a = S.coll[best.id] || [0, 0, 0, 0, 0], miss = []; a.forEach(function (v, k) { if (!v) miss.push(k); }); c = best; i = miss[Math.floor(Math.random() * miss.length)]; }
+    }
     if (!S.coll[c.id]) S.coll[c.id] = [0, 0, 0, 0, 0];
     S.coll[c.id][i]++;
     var f = { set: c.id, i: i, name: c.items[i], setName: c.name };
