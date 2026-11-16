@@ -64,10 +64,12 @@
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   }
   function clampCam() {
-    cam.z = Math.max(0.3, Math.min(2.6, cam.z));
-    var m = N * HW * 1.25;
-    cam.x = Math.max(-m, Math.min(m, cam.x));
-    cam.y = Math.max(-N * HH * 0.5, Math.min(N * 2.5 * HH, cam.y));
+    var M = 7, bx = (N + 2 * M) * HW, by0 = -2 * M * HH, by1 = (2 * N + 2 * M) * HH;   // Karte + Rand als Rechteck
+    var zMin = Math.max(0.3, Math.min(W / (2 * bx), H / (by1 - by0)) * 1.15);
+    cam.z = Math.max(zMin, Math.min(2.6, cam.z));
+    var hw = W / 2 / cam.z, hh = H / 2 / cam.z;
+    cam.x = hw >= bx ? 0 : Math.max(-bx + hw, Math.min(bx - hw, cam.x));
+    cam.y = 2 * hh >= by1 - by0 ? (by0 + by1) / 2 : Math.max(by0 + hh, Math.min(by1 - hh, cam.y));
   }
 
   // ---------- Modi ----------
@@ -951,12 +953,11 @@
       // Schlange ab der Schranke (Zoll liegt bei u = 4..6) nach außen; ruckelt ab und zu ein Stück vor
       for (var i = 0; i < 14; i++) {
         var creep = 0.12 * Math.max(0, Math.sin(t * 0.6 - i * 0.45));
-        car(i, 6.6 + i * 0.62 - creep, inb, 0.28);
+        car(i, 6.6 + i * 0.55 - creep, inb, 0.3);
       }
-      for (i = 0; i < 3; i++) car(14 + i, ((t * 1.4 + i * 7) % 22) + 1, e, 0.28);   // wenige fahren wieder weg
     } else {
-      for (i = 0; i < 9; i++) car(i, 24 - ((t * 1.3 + i * 2.7) % 24), inb, 0.28);   // rein in die Stadt
-      for (i = 0; i < 7; i++) car(9 + i, (t * 1.5 + i * 3.4) % 24, e, 0.28);         // raus
+      for (i = 0; i < 9; i++) car(i, 24 - ((t * 1.3 + i * 2.7) % 24), inb, 0.3);   // rein in die Stadt
+      for (i = 0; i < 7; i++) car(9 + i, (t * 1.5 + i * 3.4) % 24, e, 0.3);         // raus
     }
     return out;
   }
@@ -988,7 +989,7 @@
       }
       var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1];
       // Mitte des Feldes -> Mitte des nächsten Feldes, versetzt auf die rechte Spur bzw. den Gehweg
-      var off = o.car ? 0.2 : 0.43 * o.side;
+      var off = o.car ? 0.15 : 0.43 * o.side;   // Spurmitte
       o.fx = o.x + 0.5 + dx * o.t - dy * off; o.fy = o.y + 0.5 + dy * o.t + dx * off;
       out.push({ o: o, d: o.fx + o.fy });
       return true;
@@ -1008,8 +1009,8 @@
   }
   // Richtung -> Grafik: O (rechts unten) = vorn, S (links unten) = vorn gespiegelt, N (rechts oben) = hinten, W (links oben) = hinten gespiegelt
   function dirSprite(prefix, dir) { var back = dir === 0 || dir === 3, flip = dir === 2 || dir === 3; return { im: A.img(prefix + (back ? '_hinten' : '_vorn')), flip: flip }; }
-  function blit(im, x, y, flip, bottomOff) {
-    var w = im.lw, h = im.lh, c = tinted(im);
+  function blit(im, x, y, flip, bottomOff, sc) {
+    var w = im.lw * (sc || 1), h = im.lh * (sc || 1), c = tinted(im);
     if (flip) { g.save(); g.translate(x, 0); g.scale(-1, 1); g.drawImage(c, -w / 2, y - h + (bottomOff || 0), w, h); g.restore(); }
     else g.drawImage(c, x - w / 2, y - h + (bottomOff || 0), w, h);
   }
@@ -1039,7 +1040,7 @@
     if (o.lamp) return drawLamp(o);
     if (o.car) {
       var cs0 = dirSprite('auto_' + o.type, o.dir);
-      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 4); carLights(o, true); return; }
+      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 3.4, o.hw ? 0.8 : 0.85); carLights(o, true); return; }
       var along = o.dir % 2 === 1, L = 0.21, W = 0.11, x0, x1, y0, y1;   // halbe Länge/Breite in Feldern
       if (along) { x0 = o.fx - L; x1 = o.fx + L; y0 = o.fy - W; y1 = o.fy + W; } else { x0 = o.fx - W; x1 = o.fx + W; y0 = o.fy - L; y1 = o.fy + L; }
       g.beginPath(); g.ellipse(sx, sy + 1, 9, 4.5, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.18)'; g.fill();
