@@ -50,6 +50,8 @@
     pulling = true; set('lädt');
     return rpc('get_save', { p_code: CL.code }).then(function (rows) {
       var row = rows && rows[0], S = G.S;
+      // Teststadt-Markierung kommt allein vom Server (Admin), auch wenn sonst nichts Neues da ist
+      if (row && row.data && TEST === undefined && !!S.test !== !!row.data.test) { if (row.data.test) S.test = 1; else delete S.test; G.save(); }
       if (row && row.rev > (S.syncRev || 0)) {
         var d = row.data; d.syncRev = row.rev; d.cloudCode = CL.code;
         G.replace(d); markTest();

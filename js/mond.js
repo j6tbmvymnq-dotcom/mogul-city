@@ -18,7 +18,7 @@
     // crew: Arbeiter (Kolonisten) je Stück · home: Wohnplätze je Stück · mgr: Managerpreis in Erd-Dollar
     // ship: + Frachtkapazität je Stück (Raumhafen)
     B: [
-      { id: 'bagger', name: 'Regolith-Bagger', out: 'bau', amt: 1, cyc: 3000, cost: { bau: 10 }, grow: 1.07, crew: 0, mgr: 50000,
+      { id: 'bagger', name: 'Regolith-Bagger', out: 'bau', amt: 1, cyc: 3000, cost: { bau: 10 }, grow: 1.09, crew: 0, mgr: 50000,
         desc: 'Schürft Mondgestein und macht daraus Baustoffe.' },
       { id: 'eis', name: 'Eisbohrer', out: 'fuel', amt: 1, cyc: 12000, cost: { bau: 60 }, grow: 1.08, crew: 0, mgr: 200000,
         desc: 'Roboter-Bohrer: holt Wassereis aus den Kratern und spaltet es zu Treibstoff.' },
@@ -26,15 +26,16 @@
         desc: 'Platz für 4 Kolonisten. Ohne Kolonisten keine Arbeiter für Minen und Fabriken.' },
       { id: 'mine', name: 'Helium-Mine', out: 'he3', amt: 1, cyc: 60000, cost: { bau: 800, fuel: 100 }, grow: 1.10, crew: 2, mgr: 2000000,
         desc: 'Fördert Helium-3 – das wertvollste Exportgut des Mondes.' },
-      { id: 'werk', name: 'Baustoff-Fabrik', out: 'bau', amt: 40, cyc: 30000, cost: { bau: 3000, fuel: 300 }, grow: 1.11, crew: 3, mgr: 5000000,
+      { id: 'werk', name: 'Baustoff-Fabrik', out: 'bau', amt: 120, cyc: 30000, cost: { bau: 3000, fuel: 300 }, grow: 1.11, crew: 3, mgr: 5000000,
         desc: 'Presst Mondbeton in großen Mengen.' },
-      { id: 'raff', name: 'Helium-Raffinerie', out: 'he3', amt: 25, cyc: 8 * MIN, cost: { bau: 20000, fuel: 2500, he3: 50 }, grow: 1.12, crew: 5, mgr: 20000000,
+      { id: 'raff', name: 'Helium-Raffinerie', out: 'he3', amt: 150, cyc: 8 * MIN, cost: { bau: 20000, fuel: 2500, he3: 50 }, grow: 1.12, crew: 5, mgr: 20000000,
         desc: 'Reinigt Helium-3 in großem Stil.' },
       { id: 'hafen', name: 'Raumhafen', ship: 100, cost: { bau: 50000, fuel: 8000 }, grow: 1.15, crew: 4,
         desc: 'Mehr Ladung und kürzere Flüge für die Frachtrakete.' },
       { id: 'mega', name: 'Mega-Kuppel', home: 60, cost: { bau: 250000, fuel: 40000, he3: 500 }, grow: 1.20, crew: 0,
         desc: 'Eine ganze Stadt unter Glas: Platz für 60 Kolonisten.' }
     ],
+    // Balance 16.11. (tools/wirtschaft/mond-sim.js): höhere Stufen tragen den Ertrag – Fabrik/Raffinerie je ~1/3, Bagger ~15 %
     // Meilensteine je Betrieb: ab n Stück schneller (Dauer halbiert) bzw. doppelter Ertrag
     MILE: [[10, 'x2'], [25, 'speed'], [50, 'x2'], [100, 'speed'], [200, 'x2'], [400, 'x2']],
     ROCKET: { base: 50, fuel: 20, fuelPer: 0.2, dur: 15 * MIN, durPerPort: MIN, minDur: 5 * MIN, rate: 500 },   // rate: Dollar je Helium-3

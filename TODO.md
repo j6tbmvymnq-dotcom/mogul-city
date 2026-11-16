@@ -42,7 +42,12 @@ Reihenfolge = Vorschlag: erst Fehler und Bedienung, dann große Umbauten.
    - **Raketen sichtbar:** Start von der Raumfähre auf der Erde, Flug, Landung auf dem Mond.
    - **Mond am Himmel:** Nach Freischaltung erscheint der Mond groß über der Karte (bzw. am Horizont) – antippen = hinfliegen.
    - Bisheriger Mond-Stand (Betriebe, Rohstoffe, Sammlungen) wird übernommen, nicht gelöscht. *Claude*
-6. **Balance kritisch prüfen** (Nutzer: Fabrik lohnt sich gegenüber Bagger nicht): Recherche, wie Idle-/Aufbauspiele
+6. **Stand 16.11.:** Simulation `tools/wirtschaft/mond-sim.js` bestätigt: Bagger dominierten (34–52 % Ertrag), Fabrik 10–20 %,
+   Raffinerie 1–7 %. Korrektur in `js/mond.js` (veröffentlicht 16.11. nach Freigabe): Bagger-Preisanstieg
+   1,07 → 1,09, Fabrik 40 → 120, Raffinerie 25 → 150 je Durchgang → Fabrik/Raffinerie je ~33 %, Bagger 14 %.
+   Regeln für Mond 2.0 (Game Developer „Math of Idle Games“, GameAnalytics): Kosten exponentiell 7–15 %/Stück, neue Stufe
+   muss sich beim Freischalten besser rechnen als das nächste Stück der Vorstufe.
+   **Balance kritisch prüfen** (Nutzer: Fabrik lohnt sich gegenüber Bagger nicht): Recherche, wie Idle-/Aufbauspiele
    Zahlen balancieren (Kostenwachstum, Ertrag je Investition, Amortisationszeit, Meilensteine, Sitzungslängen),
    daraus Zielwerte ableiten, per Simulation prüfen. *Claude*
 7. **Grafik Mond 2.0:** Mond-Gelände, Mond-Gebäude im Iso-Stil, Raketen-Animation (Start/Flug/Landung), Mond am Himmel. *Fable*

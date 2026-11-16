@@ -1,5 +1,20 @@
 -- Mogul City · Sicherheit (nach Audit 15.11.): Plausibilitätsprüfung, Admin-PIN mit Sperre, Freunde nur echt.
 -- Vorher überall den Platzhalter DEINE-PIN durch deine PIN ersetzen. Kann mehrfach ausgeführt werden, löscht nichts.
+-- Stand 16.11. (2): eigenständig ausführbar (alte Funktionsstände werden vorher entfernt). Die Teststadt-Markierung
+-- entscheidet nur noch der Server – das Gerät des Spielers kann sie nicht wieder mitschicken (Fehler FloriCity).
+
+create table if not exists deleted_codes (code text primary key, at timestamptz not null default now());
+alter table deleted_codes enable row level security;
+drop function if exists put_save(text, int, jsonb);
+drop function if exists list_cities();
+drop function if exists list_cities(text);
+drop function if exists my_refs(text);
+drop function if exists mc_stats(text);
+drop function if exists mc_stats(text, boolean);
+drop function if exists admin_city(text, uuid, text);
+drop function if exists admin_purge_tests(text);
+drop function if exists admin_ok(text);
+drop function if exists admin_ok_last();
 
 -- ---------- Admin-PIN: nach 10 Fehlversuchen in 15 Minuten gesperrt ----------
 create table if not exists admin_fails (at timestamptz not null default now());
@@ -35,7 +50,8 @@ begin
       f := 'Sprung: Level ' || coalesce(o.lvl, 1) || ' auf ' || nl || ', Wert ' || coalesce(o.worth, 0) || ' auf ' || nw;
     end if;
     update saves set rev = p_rev,
-      data = case when o.data ? 'test' then p_data || jsonb_build_object('test', o.data->'test') else p_data end,
+      -- Test-Markierung: nur die des Servers zählt (Admin setzt/entfernt sie); was das Gerät mitschickt, wird ignoriert
+      data = case when o.data ? 'test' then (p_data - 'test') || jsonb_build_object('test', o.data->'test') else p_data - 'test' end,
       updated_at = now(), name = p_data->>'name', worth = nw, lvl = nl, advisor = p_data->>'advisor', flag = f
     where code = p_code;
   else

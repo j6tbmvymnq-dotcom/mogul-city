@@ -1047,11 +1047,13 @@
     else g.drawImage(c, x - w / 2, y - h + (bottomOff || 0), w, h);
   }
   // Halbe Fahrzeuglänge der Fable-Autos in Feldern (tools/svg/leben.py: Länge · 0,82 / 64); ihre Bodenmitte liegt 5,5 px über dem Ankerpunkt
-  var CARLEN = { kleinwagen: 0.28, limousine: 0.38, lieferwagen: 0.36, taxi: 0.33, cabrio: 0.33 }, CARMID = 5.5;
+  // CAR_SC / PERSON_SC: Größe der Fable-Fahrzeuge/-Fußgänger (Nutzer 16.11.: Autos und Leute waren zu groß)
+  var CAR_SC = 0.62, PERSON_SC = 0.55, CK = CAR_SC / 0.82;
+  var CARLEN = { kleinwagen: 0.28 * CK, limousine: 0.38 * CK, lieferwagen: 0.36 * CK, taxi: 0.33 * CK, cabrio: 0.33 * CK }, CARMID = 5.5 * CK;
   function carLights(o, sprite) {
     var L = NM.light; if (L < 0.02) return;
     var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1];
-    var a = sprite ? (CARLEN[o.type] || 0.33) : 0.2, b = sprite ? a : 0.21, up = sprite ? CARMID + 4.5 : 3, gy = sprite ? CARMID : 0;
+    var a = sprite ? (CARLEN[o.type] || 0.33 * CK) : 0.2, b = sprite ? a : 0.21, up = sprite ? CARMID + 4.5 * CK : 3, gy = sprite ? CARMID : 0;
     var fx = wx(o.fx + dx * a, o.fy + dy * a), fy = wy(o.fx + dx * a, o.fy + dy * a) - up;
     var ex = wx(o.fx + dx * (a + 0.55), o.fy + dy * (a + 0.55)), ey = wy(o.fx + dx * (a + 0.55), o.fy + dy * (a + 0.55)) - gy;
     g.save(); g.globalCompositeOperation = 'lighter';
@@ -1072,7 +1074,7 @@
     if (o.lamp) return drawLamp(o);
     if (o.car) {
       var cs0 = dirSprite('auto_' + o.type, o.dir);
-      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 3.4, 0.82); carLights(o, true); return; }
+      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 3.4 * CK, CAR_SC); carLights(o, true); return; }
       var along = o.dir % 2 === 1, L = 0.21, W = 0.11, x0, x1, y0, y1;   // halbe Länge/Breite in Feldern
       if (along) { x0 = o.fx - L; x1 = o.fx + L; y0 = o.fy - W; y1 = o.fy + W; } else { x0 = o.fx - W; x1 = o.fx + W; y0 = o.fy - L; y1 = o.fy + L; }
       g.beginPath(); g.ellipse(sx, sy + 1, 9, 4.5, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.18)'; g.fill();
@@ -1085,7 +1087,7 @@
       carLights(o);
     } else {
       var pim = A.img('person_' + o.pid + '_' + (Math.floor(now / 220 + o.ph) % 2 + 1));
-      if (pim) { blit(pim, sx, sy, o.dir === 2 || o.dir === 3, 0); return; }
+      if (pim) { blit(pim, sx, sy, o.dir === 2 || o.dir === 3, 0, PERSON_SC); return; }
       var bob = Math.abs(Math.sin(now / 160 + o.ph)) * 1.2, step = Math.sin(now / 160 + o.ph) * 1.1;
       g.beginPath(); g.ellipse(sx, sy, 2.6, 1.3, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.2)'; g.fill();
       g.strokeStyle = '#3a3f4a'; g.lineWidth = 1.1; g.beginPath(); g.moveTo(sx - 0.7, sy - 3.5); g.lineTo(sx - 0.7 + step * 0.6, sy); g.moveTo(sx + 0.7, sy - 3.5); g.lineTo(sx + 0.7 - step * 0.6, sy); g.stroke();
