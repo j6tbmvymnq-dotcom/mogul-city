@@ -24,7 +24,8 @@
         if (!w || !h) return res();
         if (/\.png$/i.test(src)) { w /= 2; h /= 2; }   // PNG-Assets liegen in doppelter Auflösung vor
         var c = document.createElement('canvas');
-        c.width = Math.round(w * SS); c.height = Math.round(h * SS);
+        var ss = /^berg_/.test(id) ? SS * 2.5 : SS;   // Berge werden bis 2,6-fach groß gezeichnet
+        c.width = Math.round(w * ss); c.height = Math.round(h * ss);
         c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
         c.lw = w; c.lh = h;          // logische Größe in Spielpixeln
         canv[id] = c; urls[id] = src;

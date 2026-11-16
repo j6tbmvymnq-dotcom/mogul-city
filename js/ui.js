@@ -1134,10 +1134,20 @@
   G.tick();               // was während der Abwesenheit fertig wurde, ohne Meldungsflut übernehmen
   MC.Cloud.start();
   MC.Cloud.track('sitzung', G.S.lvl);
+  setTimeout(function () { if (!G.visiting) highwayCheck('start'); }, 8000);   // bestehende Städte: Autobahn-Tipp nachholen
   MC.Cloud.on(function (st) {
     var e = document.querySelector('[data-cloud]'); if (e) e.textContent = st;
     if (st === 'geladen') UI.toast('Spielstand aus der Cloud geladen.');
   });
+  // Autobahn: Tipp, sobald das Randfeld uns gehört; Lob beim ersten Anschluss
+  function highwayCheck(type) {
+    var t = G.highwayTile(), mine = G.ownsTile(t[0], t[1]);
+    if (!mine) return;
+    if (G.highwayLinked()) {
+      if (!G.S.seen.autobahn) { G.markSeen('autobahn'); if (type === 'road') { UI.sound('cash'); setTimeout(function () { UI.say('autobahn_an'); }, 400); } }
+    } else if (type === 'land' || type === 'start') setTimeout(function () { tip('tipp_autobahn'); }, 1500);
+  }
+  UI.highwayCheck = highwayCheck;
   G.on(function (type, d) {
     if (type === 'levelup') MC.Cloud.track('level', d.lvl, 'level_' + d.lvl);
     if (type === 'built' && MC.DEF[d.b.t].kind === 'shop') setTimeout(function () { tip('tipp_gewerbe'); }, 1500);
@@ -1145,6 +1155,7 @@
     if (type === 'found') setTimeout(function () { tip('tipp_sammeln'); }, 1200);
     if ((type === 'road' || type === 'build') && !G.visiting && G.S.b.some(function (x) { var dk = MC.DEF[x.t].kind; return (dk === 'house' || dk === 'shop') && !x.cu && G.nearRoad(x) && !G.hasRoad(x); })) setTimeout(function () { tip('tipp_netz'); }, 700);
     if (type === 'built' && d.b.t === 'w_rakete') setTimeout(moonIntro, 1800);
+    if (!G.visiting && (type === 'land' || type === 'road' || type === 'reset')) highwayCheck(type);
     if (type === 'build' && d.b.cu && d.b.cu - G.now() >= 10 * MC.MIN) setTimeout(function () { tip('tipp_sofort'); }, 1500);
     if ((type === 'collect' || type === 'expire' || type === 'built') && G.unlocked('lease') && !G.S.seen.tip_tipp_pinsel) {
       var many = 0, tt = G.now();

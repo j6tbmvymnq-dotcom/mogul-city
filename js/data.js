@@ -11,6 +11,8 @@
   MC.MAP = MC.SECTOR * MC.SECTORS;
   MC.START_CASH = 150000;
   MC.LIST_LVL = 5;         // Städte erscheinen erst ab diesem Level in der Bestenliste (eigene Stadt immer)
+  MC.SHADOW_CUT = true;    // true, sobald Fable die schatten_* ausgeschnitten liefert (Gebäude ausgespart) -> Schatten nach dem Gebäude zeichnen
+  MC.HIGHWAY_BONUS = 5;    // +5 % Miete und Ladenumsatz, wenn das Straßennetz an der Autobahn hängt
   MC.FRIEND_MAX = 25;      // höchstens +25 % durch Freunde
   MC.FRIEND_FIRST = 5;     // erster Freund: +5 %, jeder weitere +1 %
   MC.FRIEND_PROMPTS = [5, 8, 12];   // Berater werben bei diesen Level-Aufstiegen fürs Einladen (solange kein Freund mitspielt)
@@ -316,6 +318,8 @@
     tipp_sofort: 'Dauert dir ein Bau zu lange? Tipp auf die Baustelle, dort kannst du sie mit Geld oder Gold sofort fertigstellen.',
     tipp_bestenliste: 'Schon gesehen? In der Bestenliste stehen alle Städte. Tipp eine an und schau dich dort um. Holt euch Ideen bei den anderen.',
     tipp_code: 'Dein Spielstand liegt sicher in der Cloud. Mit dem Stadt-Code im Menü spielst du auf jedem Gerät weiter.',
+    tipp_autobahn: 'Schau mal, die Autobahn endet direkt an deinem Grundstück! Bau eine Straße bis zur Zollstation. Mit Anschluss an die Autobahn bringen alle Häuser und Läden fünf Prozent mehr ein.',
+    autobahn_an: 'Angeschlossen! Deine Stadt hängt jetzt an der Autobahn. Mehr Kundschaft, mehr Mieter: Ab sofort gibt es fünf Prozent mehr Miete und Umsatz.',
     tipp_netz: 'Achtung, diese Straße hängt nicht am Hauptnetz! Nur Häuser am durchgehenden Straßennetz bekommen Mieter. Verbinde die Straßen miteinander.',
     tipp_ausbau: 'Neu: Du kannst Häuser ausbauen! Auf derselben Fläche wohnen dann mehr Leute, und die Miete steigt. Ideal, wenn der Platz knapp wird.',
     tipp_strasse: 'Ohne Straße keine Mieter! Jedes Haus und jeder Laden braucht eine Straße direkt daneben.',

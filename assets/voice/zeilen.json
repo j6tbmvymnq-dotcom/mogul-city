@@ -225,6 +225,14 @@
    "text": "Dein Spielstand liegt sicher in der Cloud. Mit dem Stadt-Code im Menü spielst du auf jedem Gerät weiter."
   },
   {
+   "id": "tipp_autobahn",
+   "text": "Schau mal, die Autobahn endet direkt an deinem Grundstück! Bau eine Straße bis zur Zollstation. Mit Anschluss an die Autobahn bringen alle Häuser und Läden fünf Prozent mehr ein."
+  },
+  {
+   "id": "autobahn_an",
+   "text": "Angeschlossen! Deine Stadt hängt jetzt an der Autobahn. Mehr Kundschaft, mehr Mieter: Ab sofort gibt es fünf Prozent mehr Miete und Umsatz."
+  },
+  {
    "id": "tipp_netz",
    "text": "Achtung, diese Straße hängt nicht am Hauptnetz! Nur Häuser am durchgehenden Straßennetz bekommen Mieter. Verbinde die Straßen miteinander."
   },

@@ -65,9 +65,9 @@
   }
   function clampCam() {
     cam.z = Math.max(0.3, Math.min(2.6, cam.z));
-    var m = N * HW;
+    var m = N * HW * 1.25;
     cam.x = Math.max(-m, Math.min(m, cam.x));
-    cam.y = Math.max(0, Math.min(N * 2 * HH, cam.y));
+    cam.y = Math.max(-N * HH * 0.5, Math.min(N * 2.5 * HH, cam.y));
   }
 
   // ---------- Modi ----------
@@ -156,6 +156,12 @@
       cam.z = from + (to - from) * e; cam.x = fx + (tx - fx) * e; cam.y = fy + (ty - fy) * e;
       if (k < 1) requestAnimationFrame(step);
     })(t0);
+  };
+  // Test/Debug: Kamera auf einen Punkt, Lage der Küsten-Wahrzeichen
+  V.lookAt = function (x, y, z) { cam.x = wx(x, y); cam.y = wy(x, y); cam.z = z || 1; };
+  V.coastSpots = function () {
+    var cg = coast(), z = E(cg.hw, cg.hwPos, 4), l = E(cg.sea, cg.light, cg.cu(cg.light)), m = E(cg.mount, N / 2, cg.mu(N / 2) + 2);
+    return { zoll: z, leuchtturm: l, berg: m };
   };
   V.focus = function (b) {
     var d = MC.DEF[b.t];
@@ -360,6 +366,7 @@
         items.push({ tree: true, sp: treeSp[(i + sx + sy) % treeSp.length], sx: wx(tx, ty), sy: wy(tx, ty), depth: tx + ty + 1 });
       }
     }
+    coastItems();
     items.sort(function (a, c) { return a.depth - c.depth; });
     itemsDirty = false; statT = 0;
   }
@@ -435,19 +442,7 @@
     // je Grundstück Rasen ODER Wiese, nur sichtbare Grundstücke) – auf Telefonen die teuerste Arbeit
     g.setTransform(dpr * z, 0, 0, dpr * z, dpr * (W / 2 - cam.x * z), dpr * (H / 2 - cam.y * z));
     if (!V.dbg.noTerrain) {
-      var o = 0.6;
-      // Meer: Bildschirm minus Insel (gerade-ungerade-Regel)
-      g.beginPath(); g.rect(vx0 - 2, vy0 - 2, vx1 - vx0 + 4, vy1 - vy0 + 4); diamondPath(-o, -o, N + o, N + o);
-      if (pw) {   // Wellengang: Muster wandert langsam seitlich
-        g.save(); g.clip('evenodd'); g.translate((now / 120) % 128, 0); g.fillStyle = pw;
-        g.fillRect(vx0 - 130, vy0 - 2, vx1 - vx0 + 260, vy1 - vy0 + 4); g.restore();
-      } else { g.fillStyle = '#3f9ec4'; g.fill('evenodd'); }
-      // Inselschatten (nur der Streifen unter der Kante)
-      g.beginPath(); diamondPath(-o, -o + 10 / 32, N + o, N + o + 10 / 32); diamondPath(-o, -o, N + o, N + o);
-      g.fillStyle = '#2a779c'; g.fill('evenodd');
-      // Strand: Ring zwischen Inselrand und Spielfläche
-      g.beginPath(); diamondPath(-o, -o, N + o, N + o); diamondPath(0, 0, N, N);
-      g.fillStyle = pat('boden_strand') || '#ecdca5'; g.fill('evenodd');
+      drawCoast(now, vx0, vx1, vy0, vy1);
       // Grundstücke: Rasen (eigen) oder Wiese (fremd), unsichtbare überspringen
       var wild = pat('boden_wild') || '#62a85a', own = grass || '#8fd47c';
       for (sx = 0; sx < MC.SECTORS; sx++) for (sy = 0; sy < MC.SECTORS; sy++) {
@@ -484,13 +479,14 @@
     if (!V.flat && !V.dbg.noLife) boats(now);
 
     // Straßen: Kachel-Asset strasse_<maske> (N=1, O=2, S=4, W=8) oder gezeichnet
-    var roads = S.roads, plain = [];
+    var roads = S.roads, plain = [], hwT = G.highwayTile();
     g.fillStyle = '#5a626e'; g.strokeStyle = '#5a626e'; g.lineWidth = 1;
     for (i = 0; i < roads.length; i++) {
       x = roads[i] % N; y = (roads[i] - x) / N;
       var rx = wx(x, y), ry = wy(x, y);
       if (rx < vx0 - 40 || rx > vx1 + 40 || ry < vy0 - 40 || ry > vy1 + 8) continue;
       var mask = (G.isRoad(x, y - 1) ? 1 : 0) | (G.isRoad(x + 1, y) ? 2 : 0) | (G.isRoad(x, y + 1) ? 4 : 0) | (G.isRoad(x - 1, y) ? 8 : 0);
+      if (x === hwT[0] && y === hwT[1]) mask |= 1 << G.coast().hw;   // Anschluss an die Autobahn (N=1, O=2, S=4, W=8 = Kante 0..3)
       var rt = A.img('strasse_' + mask);
       if (rt) { g.drawImage(rt, rx - rt.lw / 2, ry - (rt.lh - 32), rt.lw, rt.lh); continue; }
       plain.push(roads[i]);
@@ -517,6 +513,17 @@
         if (G.isMainRoad(x, y)) continue;
         diamond(x + 0.06, y + 0.06, x + 0.94, y + 0.94); g.fillStyle = 'rgba(217,48,37,.38)'; g.fill();
         g.strokeStyle = 'rgba(217,48,37,.9)'; g.lineWidth = 1.2; g.setLineDash([3, 3]); g.stroke(); g.setLineDash([]);
+      }
+    }
+
+    // Straßenbau: Anschlussfeld der Autobahn pulsiert blau, solange nicht angeschlossen (und das Feld uns gehört)
+    if ((V.mode === 'road' || V.flat) && !G.visiting) {
+      var ht = G.highwayTile();
+      if (G.ownsTile(ht[0], ht[1]) && !G.highwayLinked()) {
+        var pa = 0.3 + 0.25 * Math.sin(now / 280);
+        diamond(ht[0] + 0.06, ht[1] + 0.06, ht[0] + 0.94, ht[1] + 0.94); g.fillStyle = 'rgba(64,150,255,' + pa + ')'; g.fill();
+        g.strokeStyle = 'rgba(40,110,230,.95)'; g.lineWidth = 1.6; g.stroke();
+        V.kick();
       }
     }
 
@@ -583,8 +590,11 @@
       if (it.sx + sp.w < vx0 || it.sx - sp.w > vx1 || it.sy + sp.h < vy0 || it.sy - sp.oy > vy1) continue;
       if (it.b && it.b.id === movingId) { g.globalAlpha = 0.25; g.drawImage(sp.c, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h); g.globalAlpha = 1; continue; }
       if (it.b && it.st === 'build') { drawSite(it, t); continue; }
-      drawShadow(it);
-      g.drawImage(tinted(sp.c), it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+      if (!MC.SHADOW_CUT) drawShadow(it);
+      if (it.flip) { g.save(); g.translate(it.sx, 0); g.scale(-1, 1); g.drawImage(tinted(sp.c), -sp.ox, it.sy - sp.oy, sp.w, sp.h); g.restore(); }
+      else g.drawImage(tinted(sp.c), it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+      if (MC.SHADOW_CUT) drawShadow(it);   // ausgeschnittene Schatten liegen über dem eigenen Grundstücksboden
+      if (it.deco && NM.light > 0.02) decoLight(it);
       if (it.b && NM.light > 0.02) itemLight(it);
       if (it.d && it.d.friend) flags(it, now);
       if (it.stars) stars(it);
@@ -807,9 +817,13 @@
   // Schatten-Ebene (Fable: schatten_<id>) – Stärke nach Sonnenstand
   function shadowAlpha() { return 0.3 * Math.max(0.12, Math.min(1, (NM.h + 4) / 14)); }
   function drawShadow(it) {
-    if (!it.b) return;
-    var sh = A.img('schatten_' + spriteId(it)); if (!sh) return;
-    g.globalAlpha = shadowAlpha(); g.drawImage(sh, it.sx - it.sp.ox, it.sy - it.sp.oy, it.sp.w, it.sp.h); g.globalAlpha = 1;
+    var id = it.b ? spriteId(it) : it.deco; if (!id) return;
+    var sh = A.img('schatten_' + id); if (!sh) return;
+    var a = shadowAlpha(); if (a <= 0.01) return;
+    g.globalAlpha = a;
+    if (it.flip) { g.save(); g.translate(it.sx, 0); g.scale(-1, 1); g.drawImage(sh, -it.sp.ox, it.sy - it.sp.oy, it.sp.w, it.sp.h); g.restore(); }
+    else g.drawImage(sh, it.sx - it.sp.ox, it.sy - it.sp.oy, it.sp.w, it.sp.h);
+    g.globalAlpha = 1;
   }
   function spriteId(it) { return it.b && it.b.lvlUp > 1 && !it.stars ? it.b.t + '_s' + it.b.lvlUp : it.b ? it.b.t : ''; }
   // Boden: Welt einfärben (nur das, was schon gezeichnet ist: Gelände, Straßen, Boote) + Bodenlichter
@@ -841,6 +855,12 @@
     g.restore();
   }
   // Fensterlicht eines Gebäudes direkt nach dem Gebäude (spätere, vordere Gebäude verdecken es)
+  function decoLight(it) {   // Leuchtturm/Zoll: Licht-Ebene von Fable
+    var m = A.img('licht_' + it.deco); if (!m) return;
+    var sp = it.sp; g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = NM.light * 0.9;
+    if (it.flip) { g.translate(it.sx, 0); g.scale(-1, 1); g.drawImage(m, -sp.ox, it.sy - sp.oy, sp.w, sp.h); } else g.drawImage(m, it.sx - sp.ox, it.sy - sp.oy, sp.w, sp.h);
+    g.restore();
+  }
   function itemLight(it) {
     var k = it.d.kind, on = k === 'hq' || k === 'wonder' ? 0.9 : k === 'shop' ? (G.customers(it.b) > 0 ? 1 : 0.35) : k === 'house' ? (it.st === 'running' || it.st === 'ready' ? 1 : 0.12) : 0;
     if (!on) return;
@@ -907,7 +927,45 @@
     if (opts.indexOf(dir) >= 0 && Math.random() < 0.6) return dir;   // meistens geradeaus
     return opts[Math.floor(Math.random() * opts.length)];
   }
+  // Autobahn-Verkehr: ohne Anschluss Stau vor dem Zoll (Leute wollen in die Stadt), mit Anschluss fließender Verkehr
+  var HWCARS = [];
+  for (var hk = 0; hk < 18; hk++) HWCARS.push({ col: hk, type: null, seed: Math.random() });
+  function highwayCars(now) {
+    if (!MC.CARS || !MC.CARS.length) return [];
+    var cg = G.coast(), e = cg.hw, linked = G.highwayLinked(), t = now / 1000, out = [], inb = (e + 2) % 4;
+    // Mitte der Autobahn bei Abstand u (Felder nach außen; u = 0 ist der Kartenrand)
+    function at(u, lane, dir) {
+      var c = e === 0 ? [cg.hwPos + 0.5, -u] : e === 1 ? [N + u, cg.hwPos + 0.5] : e === 2 ? [cg.hwPos + 0.5, N + u] : [-u, cg.hwPos + 0.5];
+      var dx = DIRS[dir][0], dy = DIRS[dir][1];
+      return [c[0] - dy * lane, c[1] + dx * lane];   // rechte Spur in Fahrtrichtung
+    }
+    function car(k, u, dir, lane) {
+      var h = HWCARS[k % HWCARS.length]; if (!h.type) h.type = MC.CARS[Math.floor(h.seed * MC.CARS.length)];
+      var p = at(u, lane, dir), o = h['o' + dir] || (h['o' + dir] = { car: 1, type: h.type, hw: 1 });
+      o.dir = dir; o.fx = p[0]; o.fy = p[1];
+      // unter dem Zolldach (u 3,4 bis 6,6): hinter die Zollstation sortieren, sonst stünde das Auto auf dem Dach
+      var zd = (e === 0 ? cg.hwPos - 1 - 6 : e === 1 ? N + 3 + cg.hwPos - 1 : e === 2 ? cg.hwPos - 1 + N + 3 : -6 + cg.hwPos - 1) + 3;
+      out.push({ o: o, d: u > 3.4 && u < 6.6 ? zd - 0.05 : o.fx + o.fy });
+    }
+    if (!linked) {
+      // Schlange ab der Schranke (Zoll liegt bei u = 4..6) nach außen; ruckelt ab und zu ein Stück vor
+      for (var i = 0; i < 14; i++) {
+        var creep = 0.12 * Math.max(0, Math.sin(t * 0.6 - i * 0.45));
+        car(i, 6.6 + i * 0.62 - creep, inb, 0.28);
+      }
+      for (i = 0; i < 3; i++) car(14 + i, ((t * 1.4 + i * 7) % 22) + 1, e, 0.28);   // wenige fahren wieder weg
+    } else {
+      for (i = 0; i < 9; i++) car(i, 24 - ((t * 1.3 + i * 2.7) % 24), inb, 0.28);   // rein in die Stadt
+      for (i = 0; i < 7; i++) car(9 + i, (t * 1.5 + i * 3.4) % 24, e, 0.28);         // raus
+    }
+    return out;
+  }
   function lifeStep(now) {
+    var hw = G.visiting && !G.S.roads ? [] : highwayCars(now), city = lifeCity(now);
+    if (!hw.length) return city;
+    return city.concat(hw).sort(function (a, b) { return a.d - b.d; });
+  }
+  function lifeCity(now) {
     var S = G.S, dt = Math.min(0.1, (now - (life.last || now)) / 1000); life.last = now;
     var roads = S.roads.length, tenants = 0;
     if (roads < 3) { life.on = false; life.cars.length = 0; life.peds.length = 0; return []; }
@@ -955,18 +1013,24 @@
     if (flip) { g.save(); g.translate(x, 0); g.scale(-1, 1); g.drawImage(c, -w / 2, y - h + (bottomOff || 0), w, h); g.restore(); }
     else g.drawImage(c, x - w / 2, y - h + (bottomOff || 0), w, h);
   }
-  function carLights(o) {
+  // Halbe Fahrzeuglänge der Fable-Autos in Feldern (tools/svg/leben.py: Länge · 0,82 / 64); ihre Bodenmitte liegt 5,5 px über dem Ankerpunkt
+  var CARLEN = { kleinwagen: 0.28, limousine: 0.38, lieferwagen: 0.36, taxi: 0.33, cabrio: 0.33 }, CARMID = 5.5;
+  function carLights(o, sprite) {
     var L = NM.light; if (L < 0.02) return;
     var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1];
-    var fx = wx(o.fx + dx * 0.2, o.fy + dy * 0.2), fy = wy(o.fx + dx * 0.2, o.fy + dy * 0.2) - 3;
-    var ex = wx(o.fx + dx * 0.75, o.fy + dy * 0.75), ey = wy(o.fx + dx * 0.75, o.fy + dy * 0.75);
+    var a = sprite ? (CARLEN[o.type] || 0.33) : 0.2, b = sprite ? a : 0.21, up = sprite ? CARMID + 4.5 : 3, gy = sprite ? CARMID : 0;
+    var fx = wx(o.fx + dx * a, o.fy + dy * a), fy = wy(o.fx + dx * a, o.fy + dy * a) - up;
+    var ex = wx(o.fx + dx * (a + 0.55), o.fy + dy * (a + 0.55)), ey = wy(o.fx + dx * (a + 0.55), o.fy + dy * (a + 0.55)) - gy;
     g.save(); g.globalCompositeOperation = 'lighter';
-    var mx = (fx + ex) / 2, my = (fy + ey + 3) / 2, hg = g.createRadialGradient(mx, my, 1, mx, my, 15);
+    var mx = (fx + ex) / 2, my = (fy + ey + up - gy) / 2, hg = g.createRadialGradient(mx, my, 1, mx, my, 15);
     hg.addColorStop(0, 'rgba(255,240,190,' + (0.26 * L) + ')'); hg.addColorStop(1, 'rgba(255,240,190,0)');
     g.fillStyle = hg; g.beginPath(); g.ellipse(mx, my, 15, 9, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(255,250,220,' + (0.9 * L) + ')'; g.beginPath(); g.arc(fx, fy, 1.3, 0, Math.PI * 2); g.fill();
-    var bx2 = wx(o.fx - dx * 0.21, o.fy - dy * 0.21), by2 = wy(o.fx - dx * 0.21, o.fy - dy * 0.21) - 3;
-    g.fillStyle = 'rgba(255,60,40,' + (0.9 * L) + ')'; g.beginPath(); g.arc(bx2, by2, 1.4, 0, Math.PI * 2); g.fill();
+    var front = o.dir === 1 || o.dir === 2;   // Front sichtbar (Grafik „vorn“), sonst Heck
+    if (!sprite || front) { g.fillStyle = 'rgba(255,250,220,' + (0.9 * L) + ')'; g.beginPath(); g.arc(fx, fy, 1.3, 0, Math.PI * 2); g.fill(); }
+    if (!sprite || !front) {
+      var bx2 = wx(o.fx - dx * b, o.fy - dy * b), by2 = wy(o.fx - dx * b, o.fy - dy * b) - up;
+      g.fillStyle = 'rgba(255,60,40,' + (0.9 * L) + ')'; g.beginPath(); g.arc(bx2, by2, 1.4, 0, Math.PI * 2); g.fill();
+    }
     g.restore();
   }
   function drawAmb(a, now, vx0, vx1, vy0, vy1) {
@@ -975,7 +1039,7 @@
     if (o.lamp) return drawLamp(o);
     if (o.car) {
       var cs0 = dirSprite('auto_' + o.type, o.dir);
-      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 4); carLights(o); return; }
+      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 4); carLights(o, true); return; }
       var along = o.dir % 2 === 1, L = 0.21, W = 0.11, x0, x1, y0, y1;   // halbe Länge/Breite in Feldern
       if (along) { x0 = o.fx - L; x1 = o.fx + L; y0 = o.fy - W; y1 = o.fy + W; } else { x0 = o.fx - W; x1 = o.fx + W; y0 = o.fy - L; y1 = o.fy + L; }
       g.beginPath(); g.ellipse(sx, sy + 1, 9, 4.5, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.18)'; g.fill();
@@ -999,22 +1063,121 @@
   // Boote: ziehen auf einem Rundkurs um die Insel (Felder außerhalb der Karte)
   var BOATS = [{ p: 0.05, v: 0.006, col: '#ffffff' }, { p: 0.4, v: 0.004, col: '#e0533d' }, { p: 0.72, v: 0.005, col: '#f2b632' }];
   function boats(now) {
-    var ring = 2.6, lo = -ring, hi = N + ring, len = (hi - lo) * 4, t = now / 1000;
-    BOATS.forEach(function (b, k) {
-      var s = ((b.p + t * b.v) % 1 + 1) % 1 * len, side = Math.floor(s / (hi - lo)), u = s % (hi - lo), x, y, dx, dy;
-      if (side === 0) { x = lo + u; y = lo; dx = 1; dy = 0; } else if (side === 1) { x = hi; y = lo + u; dx = 0; dy = 1; }
-      else if (side === 2) { x = hi - u; y = hi; dx = -1; dy = 0; } else { x = lo; y = hi - u; dx = 0; dy = -1; }
+    var cg = coast(), t = now / 1000;
+    BOATS.forEach(function (bo, k) {
+      var span = N + 16, ph = ((bo.p + t * bo.v) % 2 + 2) % 2, fwd = ph < 1, pos = -8 + (fwd ? ph : 2 - ph) * span;
+      var u = cg.cu(pos) + 2.5 + k * 1.6, p = E(cg.sea, pos, u), q = E(cg.sea, pos + (fwd ? 1 : -1), u);
+      var dx = Math.sign(Math.round(q[0] - p[0])), dy = Math.sign(Math.round(q[1] - p[1])), x = p[0], y = p[1];
       var sx = wx(x, y), sy = wy(x, y) + Math.sin(t * 2 + k) * 1.2;
-      // Kielwasser
       g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.4;
       var bx = wx(x - dx * 0.9, y - dy * 0.9), by = wy(x - dx * 0.9, y - dy * 0.9);
       g.beginPath(); g.moveTo(sx, sy); g.lineTo(bx - 4, by + 2); g.moveTo(sx, sy); g.lineTo(bx + 4, by + 2); g.stroke();
+      var dir = dx > 0 ? 1 : dx < 0 ? 3 : dy > 0 ? 2 : 0, typ = MC.BOATS[k % MC.BOATS.length], bs = dirSprite('boot_' + typ, dir);
+      if (bs.im) { blit(bs.im, sx, sy, bs.flip, 6); return; }
       var along = dx !== 0, L = 0.38, W = 0.14;
       var x0 = along ? x - L : x - W, x1 = along ? x + L : x + W, y0 = along ? y - W : y - L, y1 = along ? y + W : y + L;
-      box(x0, y0, x1, y1, -1, 4, b.col);
-      box(x - 0.1 - dx * 0.08, y - 0.1 - dy * 0.08, x + 0.1 - dx * 0.08, y + 0.1 - dy * 0.08, 4, 9, '#dfe7f2');
+      box(x0, y0, x1, y1, -1, 4, tintHex(bo.col));
+      box(x - 0.1 - dx * 0.08, y - 0.1 - dy * 0.08, x + 0.1 - dx * 0.08, y + 0.1 - dy * 0.08, 4, 9, tintHex('#dfe7f2'));
     });
   }
+
+  // ---------- Küstenstadt: Gelände um die Karte, je Stadt per Seed ----------
+  // Kanten: 0 = y=0 (oben rechts), 1 = x=N (unten rechts), 2 = y=N (unten links), 3 = x=0 (oben links).
+  // E(kante, t, u): Punkt t entlang der Kante, u Felder nach außen. Bebaubare Fläche bleibt unverändert.
+  function E(e, t, u) { return e === 0 ? [t, -u] : e === 1 ? [N + u, t] : e === 2 ? [t, N + u] : [-u, t]; }
+  var rng = G.rng;
+  function coast() { return G.coast(); }
+  function polyPath(pts) { g.moveTo(wx(pts[0][0], pts[0][1]), wy(pts[0][0], pts[0][1])); for (var i = 1; i < pts.length; i++) g.lineTo(wx(pts[i][0], pts[i][1]), wy(pts[i][0], pts[i][1])); g.closePath(); }
+  function band(e, f0, f1, far) {   // Fläche zwischen u = f0(t) und u = f1(t) entlang Kante e (über die Ecken hinaus)
+    var pts = [], t;
+    for (t = -far; t <= N + far; t += 1) pts.push(E(e, t, f0(t)));
+    for (t = N + far; t >= -far; t -= 1) pts.push(E(e, t, f1(t)));
+    return pts;
+  }
+  function drawCoast(now, vx0, vx1, vy0, vy1) {
+    var cg = coast(), far = 70, i;
+    // Land ringsum (Wiese), darüber Strand/Meer und Fels/Berg
+    g.fillStyle = pat('boden_wild') || '#62a85a'; g.fillRect(vx0 - 2, vy0 - 2, vx1 - vx0 + 4, vy1 - vy0 + 4);
+    // Bergseite: Fels-Hang, dann Berg
+    g.beginPath(); polyPath(band(cg.mount, function () { return 0.4; }, function (t) { return cg.mu(t); }, far)); g.fillStyle = pat('boden_fels') || '#9a8f7c'; g.fill();
+    g.beginPath(); polyPath(band(cg.mount, function (t) { return cg.mu(t); }, function () { return far; }, far)); g.fillStyle = pat('boden_berg') || '#7d7466'; g.fill();
+    // Meerseite: Dünen, Strand, Wasser (Wellengang), Brandung
+    g.beginPath(); polyPath(band(cg.sea, function () { return 0.15; }, function (t) { return cg.du(t); }, far)); g.fillStyle = pat('boden_duene') || '#d9cf9c'; g.fill();
+    g.beginPath(); polyPath(band(cg.sea, function (t) { return cg.du(t); }, function (t) { return cg.cu(t); }, far)); g.fillStyle = pat('boden_strand') || '#ecdca5'; g.fill();
+    var water = band(cg.sea, function (t) { return cg.cu(t); }, function () { return far; }, far), pw = pat('wasser');
+    g.save(); g.beginPath(); polyPath(water); g.clip();
+    if (pw) { g.translate((now / 120) % 128, 0); g.fillStyle = pw; g.fillRect(vx0 - 130, vy0 - 2, vx1 - vx0 + 260, vy1 - vy0 + 4); }
+    else { g.fillStyle = '#3f9ec4'; g.fillRect(vx0 - 2, vy0 - 2, vx1 - vx0 + 4, vy1 - vy0 + 4); }
+    g.restore();
+    // nasser Sand + Schaumlinie
+    g.beginPath(); polyPath(band(cg.sea, function (t) { return cg.cu(t) - 0.35; }, function (t) { return cg.cu(t); }, far)); g.fillStyle = 'rgba(160,140,90,.25)'; g.fill();
+    var w = Math.sin(now / 900) * 0.08;
+    g.beginPath(); for (var t = -far; t <= N + far; t += 0.5) { var p = E(cg.sea, t, cg.cu(t) + 0.12 + w + Math.sin(t * 2.3 + now / 700) * 0.04); if (t === -far) g.moveTo(wx(p[0], p[1]), wy(p[0], p[1])); else g.lineTo(wx(p[0], p[1]), wy(p[0], p[1])); }
+    g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.6; g.stroke();
+    // Autobahn von weit draußen bis an den Kartenrand
+    var linked = G.highwayLinked(), e = cg.hw, along = e === 0 || e === 2 ? 5 : 10, endMask = e === 0 ? 1 : e === 1 ? 2 : e === 2 ? 4 : 8;
+    for (var u = 1; u <= 40; u++) {
+      var tp = E(e, cg.hwPos, u - 1), tx = Math.floor(tp[0] + (e === 3 ? -1e-9 : 0)), ty = Math.floor(tp[1]);
+      if (e === 0) ty = -u; else if (e === 1) tx = N + u - 1; else if (e === 2) ty = N + u - 1; else tx = -u;
+      var rx = wx(tx, ty), ry = wy(tx, ty);
+      if (rx < vx0 - 70 || rx > vx1 + 70 || ry < vy0 - 70 || ry > vy1 + 40) continue;
+      // letzte Kachel: ohne Anschluss Endstück; angeschlossen Übergang zur Stadtstraße (Auffahrt N->S, für W gespiegelt), sonst durchgehend
+      var flipT = false, id = 'autobahn_' + along;
+      if (u === 1) {
+        if (!linked) id = 'autobahn_' + endMask;
+        else if ((e === 0 || e === 3) && A.img('auffahrt')) { id = 'auffahrt'; flipT = e === 3; }
+      }
+      var im = A.img(id);
+      if (im && flipT) { g.save(); g.translate(rx, 0); g.scale(-1, 1); g.drawImage(im, -im.lw / 2, ry - (im.lh - 32), im.lw, im.lh); g.restore(); }
+      else if (im) g.drawImage(im, rx - im.lw / 2, ry - (im.lh - 32), im.lw, im.lh);
+      else { diamond(tx, ty, tx + 1, ty + 1); g.fillStyle = '#4a515c'; g.fill(); }
+    }
+  }
+  // Objekte außerhalb der Karte: Wald auf den Landseiten, Felsen/Berge, Leuchtturm, Zollstation
+  function coastItems() {
+    var cg = coast(), r = rng(cg.seed ^ 0x51ed), k, e, i;
+    function add(id, x, y, size, flip, sc) {
+      var c = A.img(id); if (!c) return; sc = sc || 1;
+      var w = c.lw * sc, h = c.lh * sc, base = size * 32 * sc;
+      items.push({ sp: { c: c, w: w, h: h, ox: w / 2, oy: h - base, top: h - base }, sx: wx(x, y), sy: wy(x, y), depth: x + y + size * sc, flip: flip, deco: id });
+    }
+    // Landseiten: Wald, dichter weiter draußen
+    [ (cg.sea + 1) % 4, (cg.sea + 3) % 4 ].forEach(function (e2) {
+      for (i = 0; i < 70; i++) {
+        var t = Math.floor(r() * (N + 20)) - 10, u = 1 + Math.floor(Math.pow(r(), 0.7) * 14), p = E(e2, t, u);
+        if (e2 === cg.hw && Math.abs(t - cg.hwPos) < 3) continue;   // Autobahn freihalten
+        if (!treeSp) treeSp = makeTree();
+        items.push({ tree: true, sp: treeSp[i % treeSp.length], sx: wx(p[0], p[1]), sy: wy(p[0], p[1]), depth: p[0] + p[1] + 1 });
+      }
+    });
+    // Bergseite als geschlossene Bergkette: festes 2×2-Raster, Reihe hinter Reihe, keine Überlappung.
+    // Vorne niedrige Stufen/Grate, in der Mitte Tafelberge, hinten Grate; Spitzen nur selten als Akzent.
+    // Einzelne Felsbrocken nur in kleinen Gruppen am Fuß des Hangs.
+    // Reihen werden nach hinten größer und lockerer: vorne Stufen, Mitte Tafelberge, hinten hohe Grate.
+    var ROWS = [[1, [3, 3, 4]], [1.5, [3, 1, 1]], [2.1, [1, 1, 4]], [2.6, [4, 1, 4, 2]]], u0 = 0;
+    ROWS.forEach(function (rw, ri) {
+      var sc = rw[0], step = 2 * sc * 0.9, off = r() * step;
+      for (var t2 = -16 + off; t2 < N + 16; t2 += step * (0.85 + r() * 0.3)) {
+        if (ri === 0 && r() < 0.35) continue;   // vorderste Reihe locker, Hang bleibt sichtbar
+        var u2 = Math.ceil(cg.mu(t2)) + u0 + r() * 0.8, p2 = E(cg.mount, t2, u2), v = rw[1][Math.floor(r() * rw[1].length)];
+        add('berg_' + v, Math.floor(p2[0]), Math.floor(p2[1]), 2, r() < 0.5, sc);
+      }
+      u0 += 2 * sc * 0.8;
+    });
+    for (i = 0; i < 9; i++) {
+      var t1 = Math.floor(r() * (N + 10)) - 5, n1 = 2 + Math.floor(r() * 2);
+      for (var j = 0; j < n1; j++) { var p1 = E(cg.mount, t1 + j, Math.max(0.6, cg.mu(t1 + j) - 0.8 + (j % 2) * 0.5)); add('fels_' + (1 + (i + j) % 3), Math.floor(p1[0]), Math.floor(p1[1]), 1); }
+    }
+    // Klippen an einigen Stellen der Küste, Leuchtturm auf einer Landzunge
+    var back = cg.sea === 0 || cg.sea === 3, flip = cg.sea === 1 || cg.sea === 0;
+    for (i = 0; i < 6; i++) { var t3 = Math.floor(r() * N), p3 = E(cg.sea, t3, cg.cu(t3) - 0.6); add((back ? 'klippe_hinten_' : 'klippe_') + (1 + i % 2), Math.floor(p3[0]), Math.floor(p3[1]), 1, flip); }
+    var pl = E(cg.sea, cg.light, cg.cu(cg.light) - 1.6); add('leuchtturm', Math.floor(pl[0]), Math.floor(pl[1]), 2);
+    // Zollstation über der Autobahn (Grafik zeigt die Autobahn von N nach S; für die anderen Kanten gespiegelt)
+    var e3 = cg.hw, pz = e3 === 0 ? [cg.hwPos - 1, -6] : e3 === 1 ? [N + 3, cg.hwPos - 1] : e3 === 2 ? [cg.hwPos - 1, N + 3] : [-6, cg.hwPos - 1];
+    add('zoll', pz[0], pz[1], 3, e3 === 1 || e3 === 3);
+  }
+
+
   // Vogelschwarm: ab und zu ein paar „V“ quer über den sichtbaren Ausschnitt
   var flock = null;
   function birds(now, vx0, vx1, vy0, vy1) {

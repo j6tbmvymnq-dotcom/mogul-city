@@ -6,17 +6,17 @@ Reihenfolge = Vorschlag: erst Fehler und Bedienung, dann große Umbauten.
 **Veröffentlichen:** Fehlerbehebungen sofort. Alles andere erst, wenn es zu 100 % fertig ist (inkl. Fable-Grafiken, Tests).
 
 ## A. Fehler (sofort)
-1. **Flackern nach der Rakete** (Nutzer): Teile der Grafik flackern bei jedem Durchlauf eines Fortschrittsbalkens.
+1. ~~**Flackern nach der Rakete**~~ – erledigt 16.11. (Nutzer): Teile der Grafik flackern bei jedem Durchlauf eines Fortschrittsbalkens.
    Vermutung: Mond-Liste/Panorama wird bei jedem fertigen Durchgang neu aufgebaut, Bilder laden neu. → Bilder behalten,
    nur Zahlen/Balken ändern. *Claude*
 
 ## B. Bedienung (klein, schnell)
-2. **Leiste entschlacken (vor allem Handy):** Grundleiste nur noch Bauen · Ziele · Vermieten · Kassieren.
+2. ~~**Leiste entschlacken (vor allem Handy):**~~ – erledigt 16.11. Grundleiste nur noch Bauen · Ziele · Vermieten · Kassieren.
    Neuer **Baumodus** (Knopf „Bauen“): darin Straße, Laden/Gebäude, 2D/3D-Umschalter. Der 2D-Knopf verschwindet aus der
    normalen Ansicht. **Umsetzen und Abreißen** nur noch aus dem Fenster des jeweiligen Gebäudes. Tutorial und
    Berater-Tipps anpassen (verweisen heute auf die Leisten-Knöpfe). *Claude*
 
-## C. Karte als Küstenstadt (großer Umbau)
+## C. ~~Karte als Küstenstadt~~ – erledigt und veröffentlicht 16.11.
 3. **Konzept & Technik:** statt Insel ein Küstenstreifen (Vorbild Kapstadt): eine Seite Meer mit Stränden/Buchten,
    gegenüber Berge/Hügel, dazwischen Bauland. Eine **Autobahn** kommt vom Kartenrand mit **Zollstation/Stadtgrenze**
    und hängt automatisch am Straßennetz (gilt als Netz-Anschluss „nach draußen“).
@@ -24,6 +24,13 @@ Reihenfolge = Vorschlag: erst Fehler und Bedienung, dann große Umbauten.
      keine Wiederholung; Grundstücks-Raster/Preise bleiben gleich).
    - Bestehende Städte: Seed aus dem Stadt-Code, bebaute Grundstücke bleiben bebaubar (Gelände nur auf freien Flächen
      und fremdem Land anders). *Claude*
+   - **Stand 16.11.:** Technik fertig (lokal, nicht veröffentlicht): Gelände je Seed (Meer/Strand/Dünen, Bergkette in
+     Reihen nach hinten größer, Wald, Autobahn mit Zoll, Leuchtturm, Boote entlang der Küste), Seed im Spielstand
+     (`S.seed`, bestehende Städte aus Stadt-Code/Gründungszeit), Bella/Viktor mit festem Seed. Tests grün, ~1 ms Zeichenzeit.
+     **Autobahn-Anschluss (Nutzer 16.11.):** Hauptnetz bis zum Randfeld am Zoll = +5 % Miete und Ladenumsatz
+     (`MC.HIGHWAY_BONUS`), blaues Zielfeld im Straßenbau, Tipp + Lob (vertont), Auffahrt nahtlos. Ohne Anschluss
+     dauerhaft Stau vor dem Zoll, mit Anschluss fließender Verkehr.
+     Fable-Nacharbeit geliefert (ausgeschnittene Schatten, `MC.SHADOW_CUT = true`).
 4. **Grafik:** Gelände-Kacheln (Fels/Berg, Hang, Strand-Kanten, Klippen, Buchten), Autobahn-Kacheln, Zollstation,
    ggf. Leuchtturm/Hafen-Deko. *Fable* (Auftrag vorbereiten)
 
@@ -57,5 +64,8 @@ Reihenfolge = Vorschlag: erst Fehler und Bedienung, dann große Umbauten.
 13. Vorbereitet, startet der Nutzer: `docs/FABLE-KUESTE.md`, `FABLE-MOND2.md`, `FABLE-MILLIARDAER.md`, `FABLE-FORSCHUNG.md`.
 
 ## H. Nebenbei
-15. Testspieler (`tools/test/teststadt.js`) an die Straßennetz-Regel anpassen, damit Wirtschafts-Messungen vergleichbar sind.
+14. **Achtung Veröffentlichen:** `release.sh` macht `git add -A` – jede Fehlerbehebung nimmt auch halbfertige
+    Funktionen mit. Solange C/D/E/F nicht fertig sind: Fehlerbehebung nur auf sauberem Stand (Zweig) veröffentlichen.
+15. ~~Testspieler an die Straßennetz-Regel anpassen~~ – geprüft 16.11.: 0 von 101 Häusern/Läden abgehängt, L17 nach 174 h
+    (vorher 168 h), L20 nach 278 h. Bekannt: Ziele „Volles Haus“/„Aufhübschen III“ erreicht der Testspieler nicht (Spielweise des Agenten).
 16. Sicherheits-SQL ausführen lassen (`supabase-sicherheit-mit-pin.sql`), dann FloriCity „Test entfernen“, Vocheltown „Verdacht“.

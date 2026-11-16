@@ -28,7 +28,8 @@
       st: { roads: 0, signed: 0, collected: 0, shopCollected: 0, expired: 0, earned: 0, sets: 0 },
       coll: {}, advisor: '', movePass: 0,
       tut: 0, seen: {}, sessions: 1, lastSeen: Date.now(), firstDrop: false,
-      sound: true, sndTap: true, sndCash: true, daynight: true, music: true, voice: true, ignoreMute: true, created: Date.now()
+      sound: true, sndTap: true, sndCash: true, daynight: true, music: true, voice: true, ignoreMute: true, created: Date.now(),
+      seed: Math.random().toString(36).slice(2, 10)   // Küstenform, Berge, Autobahn dieser Stadt
     };
   }
   // ältere Spielstände auf den aktuellen Aufbau bringen
@@ -36,6 +37,8 @@
     var f = fresh(), k;
     // Spielstand von vor dem Tutorial: kein Tutorial, alle Funktionen frei
     if (s.tut === undefined && s.st) { s.tut = (s.st.collected > 0 || s.b.length > 1) ? 'done' : 0; s.legacy = s.tut === 'done'; }
+    // Küsten-Seed bestehender Städte stabil aus Stadt-Code bzw. Gründungszeit
+    if (!s.seed) s.seed = String(s.cloudCode || s.created || s.name || f.seed);
     for (k in f) if (s[k] === undefined) s[k] = f[k];
     for (k in f.st) if (s.st[k] === undefined) s.st[k] = f.st[k];
     s.b = s.b.filter(function (b) { return MC.DEF[b.t]; });
@@ -134,6 +137,7 @@
     return S.land.indexOf(Math.floor(x / SEC) + ',' + Math.floor(y / SEC)) >= 0;
   };
   G.sectorOwned = function (sx, sy) { return S.land.indexOf(sx + ',' + sy) >= 0; };
+  G.ownsTile = function (x, y) { return G.sectorOwned(Math.floor(x / SEC), Math.floor(y / SEC)); };
   G.sectorBuyable = function (sx, sy) {
     if (sx < 0 || sy < 0 || sx >= MC.SECTORS || sy >= MC.SECTORS || G.sectorOwned(sx, sy)) return false;
     return G.sectorOwned(sx - 1, sy) || G.sectorOwned(sx + 1, sy) || G.sectorOwned(sx, sy - 1) || G.sectorOwned(sx, sy + 1);
@@ -152,12 +156,46 @@
       if (d.friend) { if (key === 'rent' || key === 'shop') v += G.friendBonus(); }
       else if (d.effect === key) v += d.val;
     }
+    if (key === 'rent' || key === 'shop') v += G.highwayBonus();   // Autobahn-Anschluss
     if (key === 'rent' && G.moonBonus) v += G.moonBonus();   // Kolonisten auf dem Mond (js/mond.js)
     return v;
   }
   G.effect = effect;
   G.friendBonus = function (n) { var f = n === undefined ? (S.friends || 0) : n; return f > 0 ? Math.min(MC.FRIEND_MAX, MC.FRIEND_FIRST + f - 1) : 0; };
   G.count = function (t) { var n = 0; for (var i = 0; i < S.b.length; i++) if (S.b[i].t === t) n++; return n; };
+
+  // ---------- Küstenstadt: Plan je Seed (Meer, Berge, Autobahn). Zeichnen in view.js ----------
+  // Kanten: 0 = y=0, 1 = x=N, 2 = y=N, 3 = x=0.
+  G.rng = function (seed) { var a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+  function seedOf() {
+    var src = String(S.seed || S.cloudCode || S.created || S.name || 'mogul'), h = 2166136261;
+    for (var i = 0; i < src.length; i++) { h ^= src.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  var coastCache = null, coastSrc = null;
+  G.coast = function () {
+    var src = S.seed || S.cloudCode || S.created || S.name;
+    if (coastCache && coastSrc === src) return coastCache;
+    var sd = seedOf(), r = G.rng(sd), sea = Math.floor(r() * 4), mount = (sea + 2) % 4, hwSide = r() < 0.5 ? (sea + 1) % 4 : (sea + 3) % 4;
+    // weiche Zufallskurve aus wenigen Stützstellen (Buchten/Landzungen), plus feine Unruhe
+    function curve(base, amp, step) {
+      var pts = []; for (var i = -60; i <= N + 60; i += step) pts.push([i, base + (r() * 2 - 1) * amp]);
+      return function (t) {
+        var i = Math.max(0, Math.min(pts.length - 2, Math.floor((t + 60) / step))), a = pts[i], b = pts[i + 1], f = (t - a[0]) / step;
+        f = f * f * (3 - 2 * f); return a[1] + (b[1] - a[1]) * f + Math.sin(t * 1.7 + base) * 0.12;
+      };
+    }
+    var cu = curve(2.6 + r() * 1.2, 1.4, 7 + Math.floor(r() * 5)), du = curve(0.7, 0.35, 5), mu = curve(1.4 + r(), 0.8, 6);
+    var hwPos = 10 + Math.floor(r() * (N - 20)), lt = 6 + Math.floor(r() * (N - 12));
+    var e = hwSide, tile = e === 0 ? [hwPos, 0] : e === 1 ? [N - 1, hwPos] : e === 2 ? [hwPos, N - 1] : [0, hwPos];
+    coastCache = { seed: sd, sea: sea, mount: mount, hw: hwSide, hwPos: hwPos, hwTile: tile, light: lt, cu: cu, du: du, mu: mu };
+    coastSrc = src;
+    return coastCache;
+  };
+  // Autobahn-Anschluss: Hauptstraßennetz erreicht das Feld am Kartenrand, an dem die Autobahn endet
+  G.highwayTile = function () { return G.coast().hwTile; };
+  G.highwayLinked = function () { var t = G.coast().hwTile; return G.isMainRoad(t[0], t[1]); };
+  G.highwayBonus = function () { return G.highwayLinked() ? MC.HIGHWAY_BONUS : 0; };
 
   // Straßennetz: Nur das größte zusammenhängende Netz zählt (bei Gleichstand das an der Zentrale).
   // Abgetrennte Stücke gelten als „nicht angeschlossen“ – Häuser daran bekommen keine Mieter.
