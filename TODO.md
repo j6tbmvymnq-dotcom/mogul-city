@@ -3,6 +3,7 @@
 Grundregeln für alles: Laufende Spielstände müssen ohne Verlust weiterlaufen (Migration statt Neustart).
 Alles Optische (Grafik, Licht, Schatten, Klang) macht **Fable** – Claude baut Technik, Steckplätze und Aufträge.
 Reihenfolge = Vorschlag: erst Fehler und Bedienung, dann große Umbauten.
+**Veröffentlichen:** Fehlerbehebungen sofort. Alles andere erst, wenn es zu 100 % fertig ist (inkl. Fable-Grafiken, Tests).
 
 ## A. Fehler (sofort)
 1. **Flackern nach der Rakete** (Nutzer): Teile der Grafik flackern bei jedem Durchlauf eines Fortschrittsbalkens.
@@ -47,15 +48,13 @@ Reihenfolge = Vorschlag: erst Fehler und Bedienung, dann große Umbauten.
 9. **Grafik:** Porträt, Anruf-Bild, ggf. besondere Gebäude/Weltwunder für seine Stadt. *Fable*
 
 ## F. Spieltiefe (Nutzer-Wünsche)
-10. **Mehrfach-Ausbau:** Ausbau Stufe 2/3 gibt es seit gestern. Prüfen, ob weitere Stufen sinnvoll sind (Balance). *Claude*
 11. **Forschungszentrum:** neues Gebäude mit Forschungen gegen Geld/Gold und Zeit: Bauzeiten −x %, seltenere Sachen
     häufiger finden, längere Kassier-Frist usw. Stufen mit steigenden Kosten, Late-Game-Senke für Geld. *Claude*,
     Grafik *Fable*
 
 ## G. Laufende Fable-Aufträge
-12. Leben / Licht / Schatten (`docs/FABLE-LEBEN.md`) – läuft.
-13. Haus-Ausbau-Grafiken (`docs/FABLE-AUSBAU.md`) – danach starten.
-14. Neue Aufträge vorbereiten für C4, D7, E9, F11 (je `docs/FABLE-*.md` + Gerüst in `tools/svg/`).
+12. Leben / Licht / Schatten + Haus-Ausbau – fertig (es fehlen nur `licht_w_freunde`, `schatten_blumenbeet`).
+13. Vorbereitet, startet der Nutzer: `docs/FABLE-KUESTE.md`, `FABLE-MOND2.md`, `FABLE-MILLIARDAER.md`, `FABLE-FORSCHUNG.md`.
 
 ## H. Nebenbei
 15. Testspieler (`tools/test/teststadt.js`) an die Straßennetz-Regel anpassen, damit Wirtschafts-Messungen vergleichbar sind.

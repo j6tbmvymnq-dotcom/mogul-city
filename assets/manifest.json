@@ -1,5 +1,5 @@
 {
- "version": "bc55885a",
+ "version": "935509ae",
  "sprites": {
   "hq": "hq.svg",
   "bungalow": "bungalow.svg",
@@ -185,6 +185,7 @@
   "licht_w_freiheit": "licht_w_freiheit.svg",
   "licht_w_pyramide": "licht_w_pyramide.svg",
   "licht_w_rakete": "licht_w_rakete.svg",
+  "licht_w_freunde": "licht_w_freunde.svg",
   "licht_bungalow_s2": "licht_bungalow_s2.svg",
   "licht_bungalow_s3": "licht_bungalow_s3.svg",
   "licht_reihenhaus_s2": "licht_reihenhaus_s2.svg",
@@ -238,6 +239,7 @@
   "schatten_club": "schatten_club.svg",
   "schatten_mall": "schatten_mall.svg",
   "schatten_casino": "schatten_casino.svg",
+  "schatten_blumenbeet": "schatten_blumenbeet.svg",
   "schatten_eiche": "schatten_eiche.svg",
   "schatten_palme": "schatten_palme.svg",
   "schatten_bank": "schatten_bank.svg",

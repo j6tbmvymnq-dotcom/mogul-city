@@ -51,7 +51,8 @@
   function render() {
     var m = G.moon(), h = '';
     // Panorama: jeder Betrieb an seinem Platz, ab dem ersten Stück sichtbar
-    $('mpan').innerHTML = (asset('mond_panorama') ? '<img class="mbg" src="' + asset('mond_panorama') + '" alt="">' : '<div class="mbg ph"><i class="earth"></i></div>') +
+    var ps = M.B.map(function (b) { return G.moonCount(b.id); }).join(',');
+    if (ps !== panSig || !$('mpan').firstChild) $('mpan').innerHTML = (asset('mond_panorama') ? '<img class="mbg" src="' + asset('mond_panorama') + '" alt="">' : '<div class="mbg ph"><i class="earth"></i></div>') +
       M.B.map(function (b, i) { var n = G.moonCount(b.id); return '<div class="mslot s' + i + (n ? '' : ' off') + '">' + pic(b.id, 'mpic') + (n ? '<b>' + n + '</b>' : '') + '</div>'; }).join('');
     // Mond-Ziel
     var gl = G.moonGoal();
@@ -61,8 +62,8 @@
     var p = G.moonRocketPlan(), r = m.rocket;
     h += '<div class="mcard rocket">' + pic('rakete', 'mrpic') + '<div class="mtx"><b>Frachtrakete zur Erde</b>' +
       (r ? '<span>Unterwegs mit ' + num(r.cargo) + ' Helium-3 · Ankunft in <em data-arrive="' + r.arrive + '"></em></span><div class="mbar"><i data-rprog="' + r.start + ',' + r.arrive + '"></i></div>'
-        : '<span>Ladung ' + num(p.cargo) + ' / ' + num(G.moonRocketCap()) + ' Helium-3 · Treibstoff ' + num(p.fuel) + ' · Flug ' + MC.durShort(p.dur) + '</span>') + '</div>' +
-      (r ? '' : '<button class="btn goldbtn two" data-mo="launch"' + (p.cargo < 1 || m.fuel < p.fuel ? ' disabled' : '') + '><small>Starten</small><span>+' + MC.money(p.cash) + '</span></button>') + '</div>';
+        : '<span data-rplan>Ladung ' + num(p.cargo) + ' / ' + num(G.moonRocketCap()) + ' Helium-3 · Treibstoff ' + num(p.fuel) + ' · Flug ' + MC.durShort(p.dur) + '</span>') + '</div>' +
+      (r ? '' : '<button class="btn goldbtn two" data-mo="launch"' + (p.cargo < 1 || m.fuel < p.fuel ? ' disabled' : '') + '><small>Starten</small><span data-rcash>+' + MC.money(p.cash) + '</span></button>') + '</div>';
     var bon = G.moonBonus();
     h += '<div class="mnote">' + ric('kol') + num(G.moonHomes()) + ' Kolonisten · ' + num(Math.max(0, G.moonFreeCrew())) + ' frei für Arbeit · <b>+' + bon + ' % Miete auf der Erde</b>' + (bon < M.BONUS.max ? ' (nächstes Prozent bei ' + num((bon + 1) * M.BONUS.per) + ')' : '') + '</div>';
     // Mond-Sammlungen
@@ -85,6 +86,7 @@
         (b.mgr && n && !s.mgr ? '<button class="btn ghost mmgr" data-mm="' + b.id + '"><small>Manager</small>' + MC.money(b.mgr) + '</button>' : '') +
         (!crewOk ? '<span class="mwarn">Zu wenig Arbeiter</span>' : '') + '</div></div>';
     });
+    panSig = ps;
     $('mbody').innerHTML = h;
     $('mres').innerHTML = ''; res(); sig = stateSig();
   }
@@ -99,9 +101,9 @@
     var m = G.moon(), gl = G.moonGoal(), p = G.moonRocketPlan();
     var afford = M.B.map(function (b) { var k = qty === 'max' ? Math.max(1, G.moonMaxBuy(b.id)) : qty, c = G.moonCost(b.id, k);
       return k + (Object.keys(c).every(function (r) { return m[r] >= c[r]; }) ? 'y' : 'n') + (!b.crew || G.moonFreeCrew() >= b.crew * k ? 'y' : 'n'); }).join(',');
-    return JSON.stringify(m.b) + '|' + !!m.rocket + '|' + (gl ? gl.idx + (gl.done ? 'd' : '') + gl.have : '-') + '|' + JSON.stringify(m.coll || {}) + '|' + qty + '|' + afford + '|' + (p.cargo > 0 && m.fuel >= p.fuel) + '|' + p.cargo;
+    return M.B.map(function (b) { var x = m.b[b.id]; return x ? x.n + (x.mgr ? 'm' : '') : 0; }).join(',') + '|' + !!m.rocket + '|' + (gl ? gl.idx + (gl.done ? 'd' : '') + gl.have : '-') + '|' + JSON.stringify(m.coll || {}) + '|' + qty + '|' + afford + '|' + (p.cargo > 0 && m.fuel >= p.fuel);
   }
-  var touching = false;
+  var touching = false, panSig = '';
   function loop() {
     if (!open) return;
     var got = G.moonTick();
@@ -111,6 +113,9 @@
     [].forEach.call(document.querySelectorAll('#moon [data-mp]'), function (e) { e.style.width = Math.round(G.moonProgress(e.getAttribute('data-mp')) * 100) + '%'; });
     [].forEach.call(document.querySelectorAll('#moon [data-rprog]'), function (e) { var a = e.getAttribute('data-rprog').split(','); e.style.width = Math.min(100, Math.round(100 * (t - a[0]) / (a[1] - a[0]))) + '%'; });
     [].forEach.call(document.querySelectorAll('#moon [data-arrive]'), function (e) { e.textContent = MC.dur(Math.max(0, +e.getAttribute('data-arrive') - t)); });
+    var rp = G.moonRocketPlan(), e1 = document.querySelector('#moon [data-rplan]'), e2 = document.querySelector('#moon [data-rcash]');
+    if (e1) { var tx = 'Ladung ' + num(rp.cargo) + ' / ' + num(G.moonRocketCap()) + ' Helium-3 · Treibstoff ' + num(rp.fuel) + ' · Flug ' + MC.durShort(rp.dur); if (e1.textContent !== tx) e1.textContent = tx; }
+    if (e2) { var tc = '+' + MC.money(rp.cash); if (e2.textContent !== tc) e2.textContent = tc; }
     var s = stateSig(); if (s !== sig && !touching) render(); else res();
     raf = requestAnimationFrame(loop);
   }
