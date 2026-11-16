@@ -930,7 +930,7 @@
     return opts[Math.floor(Math.random() * opts.length)];
   }
   // Autobahn-Verkehr: ohne Anschluss Stau vor dem Zoll (Leute wollen in die Stadt), mit Anschluss fließender Verkehr
-  var HWCARS = [];
+  var HWCARS = [], hwMov = [], hwLast = 0, hwK = 0;
   for (var hk = 0; hk < 18; hk++) HWCARS.push({ col: hk, type: null, seed: Math.random() });
   function highwayCars(now) {
     if (!MC.CARS || !MC.CARS.length) return [];
@@ -941,23 +941,48 @@
       var dx = DIRS[dir][0], dy = DIRS[dir][1];
       return [c[0] - dy * lane, c[1] + dx * lane];   // rechte Spur in Fahrtrichtung
     }
-    function car(k, u, dir, lane) {
+    function car(k, u, dir, lane, m) {
       var h = HWCARS[k % HWCARS.length]; if (!h.type) h.type = MC.CARS[Math.floor(h.seed * MC.CARS.length)];
-      var p = at(u, lane, dir), o = h['o' + dir] || (h['o' + dir] = { car: 1, type: h.type, hw: 1 });
+      var o;
+      if (m) { o = m.o || (m.o = { car: 1, type: m.type || (m.type = h.type), hw: 1 }); }
+      else o = h['o' + dir] || (h['o' + dir] = { car: 1, type: h.type, hw: 1 });
+      var p = at(u, lane, dir);
       o.dir = dir; o.fx = p[0]; o.fy = p[1];
       // unter dem Zolldach (u 3,4 bis 6,6): hinter die Zollstation sortieren, sonst stünde das Auto auf dem Dach
       var zd = (e === 0 ? cg.hwPos - 1 - 6 : e === 1 ? N + 3 + cg.hwPos - 1 : e === 2 ? cg.hwPos - 1 + N + 3 : -6 + cg.hwPos - 1) + 3;
-      out.push({ o: o, d: u > 3.4 && u < 6.6 ? zd - 0.05 : o.fx + o.fy });
+      out.push({ o: o, d: u > 4.3 && u < 5.7 ? zd - 0.05 : o.fx + o.fy });
     }
     if (!linked) {
+      hwMov.length = 0;
       // Schlange ab der Schranke (Zoll liegt bei u = 4..6) nach außen; ruckelt ab und zu ein Stück vor
       for (var i = 0; i < 14; i++) {
         var creep = 0.12 * Math.max(0, Math.sin(t * 0.6 - i * 0.45));
         car(i, 6.6 + i * 0.55 - creep, inb, 0.3);
       }
     } else {
-      for (i = 0; i < 9; i++) car(i, 24 - ((t * 1.3 + i * 2.7) % 24), inb, 0.3);   // rein in die Stadt
-      for (i = 0; i < 7; i++) car(9 + i, (t * 1.5 + i * 3.4) % 24, e, 0.3);         // raus
+      var dt = Math.min(0.1, (now - (hwLast || now)) / 1000), nIn = 0, nOut = 0, far = 99, near = 99;
+      hwLast = now;
+      if (!hwMov.length) {   // gerade angeschlossen / geladen: Autobahn gleich gefüllt statt leer
+        for (var f = 0; f < 8; f++) hwMov.push({ u: 1.5 + f * 3.1, dir: inb, v: 1.1 + Math.random() * 0.5, k: hwK++ });
+        for (f = 0; f < 3; f++) hwMov.push({ u: 3 + f * 7.5, dir: e, v: 1.2 + Math.random() * 0.4, k: hwK++ });
+      }
+      hwMov.forEach(function (m) { if (m.dir === inb) { nIn++; far = Math.min(far, 26 - m.u); } else { nOut++; near = Math.min(near, m.u); } });
+      if (nIn < 9 && far > 2.4) hwMov.push({ u: 26, dir: inb, v: 1.1 + Math.random() * 0.5, k: hwK++ });
+      // wenig Verkehr aus der Stadt: Auto kommt unter dem Zolldach hervor (dort verdeckt)
+      if (nOut < 3 && near > 3 && Math.random() < dt * 0.5) hwMov.push({ u: 5, dir: e, v: 1.2 + Math.random() * 0.4, k: hwK++ });
+      for (i = hwMov.length - 1; i >= 0; i--) {
+        var m = hwMov[i];
+        m.u += (m.dir === e ? 1 : -1) * m.v * dt;
+        if (m.u > 27) { hwMov.splice(i, 1); continue; }
+        if (m.u <= -0.5) {   // Mitte des Anschlussfelds erreicht: weiter als Stadtauto
+          hwMov.splice(i, 1);
+          life.cars.unshift({ x: cg.hwTile[0], y: cg.hwTile[1], dir: inb, t: 0, v: m.v * 0.8, col: CARCOL[m.k % CARCOL.length], car: 1, type: m.type || MC.CARS[m.k % MC.CARS.length] });
+          continue;
+        }
+        // Spur weich von Autobahn (0,3) auf Stadtstraße (0,15) überblenden
+        var lane = 0.15 + 0.15 * Math.max(0, Math.min(1, (m.u + 0.5) / 2));
+        car(m.k, m.u, m.dir, lane, m);
+      }
     }
     return out;
   }
@@ -978,13 +1003,20 @@
     while (life.peds.length < wantPeds) spawnOn(life.peds, function (x, y, d) { return { x: x, y: y, dir: d, t: Math.random(), v: 0.22 + Math.random() * 0.12, col: SHIRT[Math.floor(Math.random() * SHIRT.length)], side: Math.random() < 0.5 ? 1 : -1, ph: Math.random() * 6, pid: 1 + Math.floor(Math.random() * MC.PEOPLE) }; });
     life.cars.length = Math.min(life.cars.length, wantCars); life.peds.length = Math.min(life.peds.length, wantPeds);
     life.on = life.cars.length + life.peds.length > 0;
-    var out = [];
+    var out = [], hwLink = !G.visiting || S.roads.length ? G.highwayLinked() : false, hwT = hwLink ? G.highwayTile() : null, hwE = hwLink ? G.coast().hw : -1;
     function move(o, i, list) {
       o.t += o.v * dt;
       while (o.t >= 1) {
         o.t -= 1; o.x += DIRS[o.dir][0]; o.y += DIRS[o.dir][1];
-        if (!G.isRoad(o.x, o.y)) { list.splice(i, 1); return false; }
-        var nd = nextDir(o.x, o.y, o.dir); if (nd < 0) { list.splice(i, 1); return false; }
+        if (!G.isRoad(o.x, o.y)) {
+          list.splice(i, 1);
+          if (o.car && hwLink && o.dir === hwE && o.x - DIRS[hwE][0] === hwT[0] && o.y - DIRS[hwE][1] === hwT[1])
+            hwMov.push({ u: 0.5 + o.t, dir: hwE, v: Math.max(1.1, o.v), k: hwK++, type: o.type });   // auf die Autobahn
+          return false;
+        }
+        var nd = nextDir(o.x, o.y, o.dir);
+        if (o.car && hwLink && o.x === hwT[0] && o.y === hwT[1] && o.dir !== (hwE + 2) % 4 && Math.random() < 0.7) nd = hwE;   // raus aus der Stadt
+        if (nd < 0) { list.splice(i, 1); return false; }
         o.dir = nd;
       }
       var dx = DIRS[o.dir][0], dy = DIRS[o.dir][1];
@@ -1040,7 +1072,7 @@
     if (o.lamp) return drawLamp(o);
     if (o.car) {
       var cs0 = dirSprite('auto_' + o.type, o.dir);
-      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 3.4, o.hw ? 0.8 : 0.85); carLights(o, true); return; }
+      if (cs0.im) { blit(cs0.im, sx, sy, cs0.flip, 3.4, 0.82); carLights(o, true); return; }
       var along = o.dir % 2 === 1, L = 0.21, W = 0.11, x0, x1, y0, y1;   // halbe Länge/Breite in Feldern
       if (along) { x0 = o.fx - L; x1 = o.fx + L; y0 = o.fy - W; y1 = o.fy + W; } else { x0 = o.fx - W; x1 = o.fx + W; y0 = o.fy - L; y1 = o.fy + L; }
       g.beginPath(); g.ellipse(sx, sy + 1, 9, 4.5, 0, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.18)'; g.fill();

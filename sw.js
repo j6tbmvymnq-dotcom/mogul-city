@@ -1,5 +1,5 @@
 /* Mogul City – Offline-Cache. Bei jeder Änderung am Spiel VERSION erhöhen. */
-var VERSION = 'mogulcity-5e3cf146';
+var VERSION = 'mogulcity-fb13a61d';
 var FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/config.js', 'js/data.js', 'js/game.js', 'js/cloud.js', 'js/assets.js', 'js/art.js', 'js/view.js', 'js/ui.js',
