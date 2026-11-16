@@ -191,12 +191,12 @@
   };
   // Vorstellung einer neuen Funktion nach dem Level-up: Level -> [Sprecherzeile, Ziel-Element]
   MC.FEATURE_INTRO = {
-    2: ['neu_gewerbe', '[data-act=shop]'],
-    3: ['neu_werkzeuge', '[data-act=move]'],
+    2: ['neu_gewerbe', '[data-act=build]'],
+    3: ['neu_werkzeuge', null],
     4: ['neu_tagesbonus', '[data-act=collect]'],
     5: ['neu_land', null],
     6: ['neu_sammlung', '#lvlBox'],
-    7: ['neu_wunder', '[data-act=shop]']
+    7: ['neu_wunder', '[data-act=build]']
   };
 
   // Wert eines Goldbarrens in Dollar (Tausch und Firmenwert), steigt mit dem Level
@@ -283,7 +283,7 @@
     tut_8: 'Unter Ziele siehst du immer, was als Nächstes zu tun ist. Viel Erfolg, Chef!',
     // neue Funktionen
     neu_gewerbe: 'Neu: Gewerbe! Ein Kaffeehaus verdient an jedem Bewohner in seiner Nähe. Bau es mitten zwischen deine Häuser.',
-    neu_werkzeuge: 'Ab jetzt kannst du Gebäude umsetzen und abreißen. Die Werkzeuge findest du unten in der Leiste.',
+    neu_werkzeuge: 'Ab jetzt kannst du Gebäude umsetzen und abreißen. Tipp dafür einfach das Gebäude an.',
     neu_tagesbonus: 'Neu: Mit Kassieren holst du alle fälligen Mieten auf einmal. Und wer jeden Tag vorbeischaut, bekommt einen Tagesbonus.',
     neu_land: 'Deine Stadt wird zu klein? Ab jetzt kannst du Grundstücke kaufen. Tippe auf ein Verkaufsschild am Stadtrand.',
     neu_sammlung: 'Neu: Sammlungen! Beim Kassieren findest du manchmal Sammelstücke. Volle Sammlungen tauschst du in der Zentrale gegen Belohnungen.',
@@ -308,7 +308,7 @@
     mond_bonus: 'Je mehr Kolonisten auf dem Mond leben, desto mehr Miete zahlen die Leute auf der Erde. Bis zu fünfzehn Prozent!',
     mond_sammeln: 'Ein Fund vom Mond! Auch hier oben gibt es Sammlungen. Volle Sammlungen tauschst du gegen Rohstoffe und Gold.',
     tipp_ziel: 'Oben links steht immer dein aktuelles Ziel, mit Fortschritt. Tipp drauf, dann siehst du alle Ziele und die Belohnung.',
-    tipp_2d: 'Wird es eng? Mit dem Knopf 2D rechts unten legst du alle Gebäude flach hin. So siehst du jede Straße und jedes freie Feld. Mit 3D geht es zurück.',
+    tipp_2d: 'Wird es eng? Im Baumodus legst du mit dem Knopf 2D alle Gebäude flach hin. So siehst du jede Straße und jedes freie Feld. Mit 3D geht es zurück.',
     tipp_strassenmodus: 'Straßen ziehst du einfach mit dem Finger. Tippst du auf eine vorhandene Straße, verschwindet sie wieder.',
     tipp_umsetzen: 'Tipp ein Gebäude an, zieh es an die neue Stelle und setz es ab. Das kostet eine kleine Gebühr, und laufende Verträge starten danach neu.',
     tipp_abriss: 'Beim Abreißen bekommst du einen Teil des Baupreises zurück. Überleg es dir also gut, umsetzen ist oft die bessere Wahl.',

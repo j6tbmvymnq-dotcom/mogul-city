@@ -397,3 +397,11 @@ body.onmoon #hud, body.onmoon #bar, body.onmoon #goal, body.onmoon #flatBtn, bod
 .mission.upg { display: flex; gap: 12px; align-items: center; text-align: left; }
 .mission.upg img { width: 74px; height: 74px; object-fit: contain; flex: none; }
 .mission.upg p { margin: 2px 0 0; font-size: 13px; color: var(--mute); }
+
+/* Leiste: normal vs. Baumodus */
+#bar button[data-grp="bau"] { display: none; }
+body.buildmode #bar button[data-grp="main"] { display: none; }
+body.buildmode #bar button[data-grp="bau"] { display: flex; }
+#bar .flattxt { font-size: 17px; font-weight: 800; line-height: 23px; height: 23px; }
+#bar button[data-act="done"] { background: linear-gradient(#35c26b, #1f9d50); color: #fff; }
+#flatBtn { display: none !important; }

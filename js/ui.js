@@ -137,11 +137,22 @@
   }
 
   // ---------- Flache Ansicht (2D) zum Bearbeiten: Knopf rechts über der Leiste ----------
+  // Baumodus: eigene Leiste (Gebäude, Straße, 2D/3D, Fertig); außerhalb immer 3D
+  function buildMode(on) {
+    if (V.mode !== 'idle') V.setMode('idle');
+    closeSheet(true);
+    document.body.classList.toggle('buildmode', !!on);
+    if (!on && V.flat) V.setFlat(false);
+    flatBtn();
+  }
+  UI.buildMode = buildMode;
+  UI.inBuildMode = function () { return document.body.classList.contains('buildmode'); };
   function flatBtn() {
+    var bf = $('barFlat'); if (bf) bf.textContent = V.flat ? '3D' : '2D';
     var b = $('flatBtn'); if (!b) return;
-    var show = !G.inTut() && !G.visiting;
-    if (!show && V.flat) V.setFlat(false);
-    b.hidden = !show;
+    var show = false;   // 2D/3D gibt es nur noch im Baumodus (Leiste)
+    if ((G.visiting || !UI.inBuildMode()) && V.flat) V.setFlat(false);
+    b.hidden = true;
     $('flatTxt').textContent = V.flat ? '3D' : '2D';
     b.classList.toggle('on', V.flat);
   }
@@ -170,7 +181,7 @@
   }
 
   // ---------- Freischaltungen: Werkzeuge ein-/ausblenden, „Neu“-Abzeichen, nächste Freischaltung ----------
-  var TOOL_FEATURE = { move: 'move', bulldoze: 'bulldoze', lease: 'lease', collect: 'collectall' };
+  var TOOL_FEATURE = { lease: 'lease', collect: 'collectall' };
   var featSig = '';
   function shopHasNew() {
     if (G.inTut()) return false;
@@ -188,7 +199,7 @@
       b.hidden = !on;
       setNew(b, on && !G.inTut() && G.isNew('tool_' + a) && !S.legacy);
     });
-    setNew(document.querySelector('[data-act=shop]'), shopHasNew());
+    setNew(document.querySelector('[data-act=shop]'), shopHasNew()); setNew(document.querySelector('[data-act=build]'), shopHasNew());
     // Vorschau: was kommt mit dem nächsten Level?
     var ic = $('nextIc');
     if (nx && !S.legacy) {
@@ -247,8 +258,8 @@
       var tm = { road: 'tipp_strassenmodus', move: 'tipp_umsetzen', bulldoze: 'tipp_abriss' }[m];
       var shown = tm && tip(tm, 500);
       // 2D-Ansicht: beim Bearbeiten, sobald die Stadt voller wird (und nicht schon ein anderer Tipp läuft)
-      if (!shown && m !== 'idle' && !V.flat && G.S.b.length >= 10 && tip('tipp_2d', 700)) {
-        var fb = $('flatBtn'); if (fb) { fb.classList.add('pulse'); setTimeout(function () { fb.classList.remove('pulse'); }, 7000); }
+      if (!shown && m !== 'idle' && !V.flat && UI.inBuildMode() && G.S.b.length >= 10 && tip('tipp_2d', 700)) {
+        var fb = document.querySelector('[data-act=flat]'); if (fb) { fb.classList.add('pulse'); setTimeout(function () { fb.classList.remove('pulse'); }, 7000); }
       }
     }
     if (m !== 'idle') $('advisor').hidden = true;
@@ -263,7 +274,7 @@
     if (m === 'move') moveBanner(); else $('bannerText').innerHTML = txt || '';
     $('bannerDone').hidden = place;
     var btns = document.querySelectorAll('#bar button');
-    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-act') === (m === 'sign' ? 'lease' : m));
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-act') === (m === 'sign' ? 'lease' : m) || (btns[i].getAttribute('data-act') === 'flat' && V.flat));
     if (m !== 'idle') closeSheet(true);
     UI.ghostMoved();
   };
@@ -977,6 +988,9 @@
     var a = el.getAttribute('data-act');
     if (a !== 'collect') UI.sound('tap');
     if (TOOL_FEATURE[a]) G.markSeen('tool_' + a);
+    if (a === 'build') { buildMode(true); return; }
+    if (a === 'done') { buildMode(false); return; }
+    if (a === 'flat') { V.setFlat(!V.flat); if (V.flat && !G.S.seen.flat) G.markSeen('flat'); return; }
     if (a === 'shop') { if (V.mode !== 'idle') V.setMode('idle'); openShop(); }
     else if (a === 'missions') { if (V.mode !== 'idle') V.setMode('idle'); openMissions(); }
     else if (a === 'lease') { if (V.mode === 'sign') V.setMode('idle'); else { if (V.mode !== 'idle') V.setMode('idle'); openLease(); } }
@@ -995,7 +1009,7 @@
     }
   });
   $('bannerDone').addEventListener('click', function () { UI.sound('tap'); V.setMode('idle'); });
-  $('placeCancel').addEventListener('click', function () { UI.sound('tap'); V.setMode(V.ghost && V.ghost.moving ? 'move' : 'idle'); });
+  $('placeCancel').addEventListener('click', function () { UI.sound('tap'); V.setMode('idle'); });
   $('placeOk').addEventListener('click', function () {
     var q = V.ghost; if (!q) return;
     if (!V.ghostOk()) return UI.toast(G.canPlace(q.def, q.x, q.y, q.moving ? q.moving.id : 0) ? 'Hier ist kein Platz.' : 'Hier geht es nicht: Platz belegt oder noch nicht dein Land.', true);
@@ -1026,7 +1040,7 @@
   $('lvlBox').addEventListener('click', function () { UI.sound('tap'); openBuilding(G.S.b[0]); });
 
   // UI-Symbole aus Assets (ui_*, hud_*), sonst bleiben die eingebauten
-  var UI_ICONS = { shop: 'ui_bauen', road: 'ui_strasse', move: 'ui_umsetzen', bulldoze: 'ui_abriss', missions: 'ui_ziele', collect: 'ui_kassieren' };
+  var UI_ICONS = { build: 'ui_bauen', shop: 'ui_bauen', road: 'ui_strasse', missions: 'ui_ziele', collect: 'ui_kassieren' };
   function applyUiAssets() {
     Object.keys(UI_ICONS).forEach(function (k) {
       var u = AS.url(UI_ICONS[k]), b = document.querySelector('[data-act=' + k + '] svg');

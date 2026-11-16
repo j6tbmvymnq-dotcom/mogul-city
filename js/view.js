@@ -100,7 +100,7 @@
       err = G.move(q.moving, q.x, q.y);
       if (err) return MC.UI.toast(err, true);
       MC.UI.sound('build');
-      V.setMode('move');
+      V.setMode('idle');
       return;
     }
     err = G.build(q.def.id, q.x, q.y);

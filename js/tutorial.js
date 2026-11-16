@@ -26,14 +26,14 @@
       if (!tabOn(kind)) return { el: '[data-tab=' + kind + ']' };
       return { el: '[data-build=' + id + ']' };
     }
-    return { el: '[data-act=shop]' };
+    return { el: UI.inBuildMode() ? '[data-act=shop]' : '[data-act=build]' };
   }
 
   var STEPS = [
     { line: 'tut_1',
       target: function () {
         V.tutTiles = MC.TUT.road.map(P);
-        return V.mode === 'road' ? { tiles: V.tutTiles } : (V.mode === 'idle' ? { el: '[data-act=road]' } : { el: '#bannerDone' });
+        return V.mode === 'road' ? { tiles: V.tutTiles } : (V.mode === 'idle' ? { el: UI.inBuildMode() ? '[data-act=road]' : '[data-act=build]' } : { el: '#bannerDone' });
       },
       done: function () { return MC.TUT.road.every(function (d) { var p = P(d); return G.isRoad(p[0], p[1]); }); },
       leave: function () { V.tutTiles = null; if (V.mode === 'road') V.setMode('idle'); } },
@@ -71,7 +71,7 @@
       target: function () { return null; },
       done: function () { return okClicked; } },
     { line: 'tut_8',
-      target: function () { return sheetOpen() && $('#sheetTitle').textContent !== 'Ziele' ? { el: '#sheetClose' } : { el: '[data-act=missions]' }; },
+      target: function () { return sheetOpen() && $('#sheetTitle').textContent !== 'Ziele' ? { el: '#sheetClose' } : { el: UI.inBuildMode() ? '[data-act=done]' : '[data-act=missions]' }; },
       done: function () { return sheetOpen() && $('#sheetTitle').textContent === 'Ziele'; } }
   ];
 
@@ -144,6 +144,7 @@
   }
   function finish(skipped) {
     stop();
+    document.body.classList.remove('buildmode'); if (V.flat) V.setFlat(false);   // nach dem Tutorial wieder die normale Leiste
     MC.Cloud.track(skipped ? 'tut_abbruch' : 'tut_fertig', null, 'tut_ende');
     G.finishTutorial(skipped);
     UI.hud();

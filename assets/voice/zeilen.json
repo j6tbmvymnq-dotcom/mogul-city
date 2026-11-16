@@ -98,7 +98,7 @@
   },
   {
    "id": "neu_werkzeuge",
-   "text": "Ab jetzt kannst du Gebäude umsetzen und abreißen. Die Werkzeuge findest du unten in der Leiste."
+   "text": "Ab jetzt kannst du Gebäude umsetzen und abreißen. Tipp dafür einfach das Gebäude an."
   },
   {
    "id": "neu_tagesbonus",
@@ -194,7 +194,7 @@
   },
   {
    "id": "tipp_2d",
-   "text": "Wird es eng? Mit dem Knopf 2D rechts unten legst du alle Gebäude flach hin. So siehst du jede Straße und jedes freie Feld. Mit 3D geht es zurück."
+   "text": "Wird es eng? Im Baumodus legst du mit dem Knopf 2D alle Gebäude flach hin. So siehst du jede Straße und jedes freie Feld. Mit 3D geht es zurück."
   },
   {
    "id": "tipp_strassenmodus",

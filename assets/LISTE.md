@@ -399,39 +399,39 @@ Erzeugt mit `node tools/assets.js`. Status: ok / fehlt / FEHLER. Vorgaben: [ASSE
 
 | Datei | Maße | Inhalt | Status |
 |---|---|---|---|
-| sprites/boden_fels.svg | 128×64 kachelbar | Felsiger Berghang (grau-braun, etwas Grün dazwischen), kachelbar – Bergseite der Karte *(optional)* | fehlt |
-| sprites/boden_berg.svg | 128×64 kachelbar | Höher gelegener Berg: dunkler Fels, Geröll, vereinzelt Büsche, kachelbar *(optional)* | fehlt |
-| sprites/boden_duene.svg | 128×64 kachelbar | Dünen/Strandgras zwischen Strand und Bauland, kachelbar *(optional)* | fehlt |
-| sprites/berg_1.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 1 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | fehlt |
-| sprites/berg_2.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 2 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | fehlt |
-| sprites/berg_3.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 3 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | fehlt |
-| sprites/berg_4.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 4 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | fehlt |
-| sprites/fels_1.svg | 64 breit, Höhe frei (32–392) | Felsbrocken/Geröll Variante 1 (1×1), für Hang und Küste *(optional)* | fehlt |
-| sprites/fels_2.svg | 64 breit, Höhe frei (32–392) | Felsbrocken/Geröll Variante 2 (1×1), für Hang und Küste *(optional)* | fehlt |
-| sprites/fels_3.svg | 64 breit, Höhe frei (32–392) | Felsbrocken/Geröll Variante 3 (1×1), für Hang und Küste *(optional)* | fehlt |
-| sprites/klippe_1.svg | 64 breit, Höhe frei (32–392) | Klippe/Felsküste am Wasser Variante 1 (1×1, Brandung angedeutet) *(optional)* | fehlt |
-| sprites/klippe_2.svg | 64 breit, Höhe frei (32–392) | Klippe/Felsküste am Wasser Variante 2 (1×1, Brandung angedeutet) *(optional)* | fehlt |
-| sprites/autobahn_0.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse keine (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_1.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_2.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_3.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_4.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_5.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_6.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O+S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_7.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O+S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_8.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_9.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_10.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_11.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_12.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_13.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_14.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O+S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/autobahn_15.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O+S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | fehlt |
-| sprites/auffahrt.svg | 64 breit, Höhe frei (32–392) | Übergang Autobahn → Stadtstraße (Abfahrt), Autobahn kommt von oben rechts (N), Stadtstraße geht unten links (S) weiter *(optional)* | fehlt |
-| sprites/zoll.svg | 192 breit, Höhe frei (96–456) | Zollstation/Stadtgrenze über der Autobahn (3×3): Dach über den Spuren, Kabinen, Schranken, Fahnen, Schild ohne Schrift *(optional)* | fehlt |
-| sprites/leuchtturm.svg | 128 breit, Höhe frei (64–424) | Leuchtturm auf Felsen an der Küste (Deko-Wahrzeichen, 2×2) *(optional)* | fehlt |
-| sprites/licht_leuchtturm.svg | 128 breit, Höhe frei (64–424) | Nachtlicht des Leuchtturms (gleiche Maße, nur leuchtende Teile) *(optional)* | fehlt |
-| sprites/licht_zoll.svg | 192 breit, Höhe frei (96–456) | Nachtlicht der Zollstation (gleiche Maße, nur leuchtende Teile) *(optional)* | fehlt |
+| sprites/boden_fels.svg | 128×64 kachelbar | Felsiger Berghang (grau-braun, etwas Grün dazwischen), kachelbar – Bergseite der Karte *(optional)* | ok |
+| sprites/boden_berg.svg | 128×64 kachelbar | Höher gelegener Berg: dunkler Fels, Geröll, vereinzelt Büsche, kachelbar *(optional)* | ok |
+| sprites/boden_duene.svg | 128×64 kachelbar | Dünen/Strandgras zwischen Strand und Bauland, kachelbar *(optional)* | ok |
+| sprites/berg_1.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 1 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | ok |
+| sprites/berg_2.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 2 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | ok |
+| sprites/berg_3.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 3 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | ok |
+| sprites/berg_4.svg | 128 breit, Höhe frei (64–424) | Bergkuppe/Felsmassiv Variante 4 (wie ein Gebäude auf 2×2 Feldern, hoch, naturnah, Tafelberg-Stimmung), steht auf boden_berg *(optional)* | ok |
+| sprites/fels_1.svg | 64 breit, Höhe frei (32–392) | Felsbrocken/Geröll Variante 1 (1×1), für Hang und Küste *(optional)* | ok |
+| sprites/fels_2.svg | 64 breit, Höhe frei (32–392) | Felsbrocken/Geröll Variante 2 (1×1), für Hang und Küste *(optional)* | ok |
+| sprites/fels_3.svg | 64 breit, Höhe frei (32–392) | Felsbrocken/Geröll Variante 3 (1×1), für Hang und Küste *(optional)* | ok |
+| sprites/klippe_1.svg | 64 breit, Höhe frei (32–392) | Klippe/Felsküste am Wasser Variante 1 (1×1, Brandung angedeutet) *(optional)* | ok |
+| sprites/klippe_2.svg | 64 breit, Höhe frei (32–392) | Klippe/Felsküste am Wasser Variante 2 (1×1, Brandung angedeutet) *(optional)* | ok |
+| sprites/autobahn_0.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse keine (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_1.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_2.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_3.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_4.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_5.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_6.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O+S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_7.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O+S (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_8.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_9.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_10.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_11.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_12.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_13.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_14.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse O+S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/autobahn_15.svg | 64 breit, Höhe frei (32–392) | Autobahnkachel (breiter als Stadtstraße: 2×2 Spuren, Mittelleitplanke, Seitenstreifen), Anschlüsse N+O+S+W (N oben rechts, O unten rechts, S unten links, W oben links). Nahtlos aneinander. *(optional)* | ok |
+| sprites/auffahrt.svg | 64 breit, Höhe frei (32–392) | Übergang Autobahn → Stadtstraße (Abfahrt), Autobahn kommt von oben rechts (N), Stadtstraße geht unten links (S) weiter *(optional)* | ok |
+| sprites/zoll.svg | 192 breit, Höhe frei (96–456) | Zollstation/Stadtgrenze über der Autobahn (3×3): Dach über den Spuren, Kabinen, Schranken, Fahnen, Schild ohne Schrift *(optional)* | ok |
+| sprites/leuchtturm.svg | 128 breit, Höhe frei (64–424) | Leuchtturm auf Felsen an der Küste (Deko-Wahrzeichen, 2×2) *(optional)* | ok |
+| sprites/licht_leuchtturm.svg | 128 breit, Höhe frei (64–424) | Nachtlicht des Leuchtturms (gleiche Maße, nur leuchtende Teile) *(optional)* | ok |
+| sprites/licht_zoll.svg | 192 breit, Höhe frei (96–456) | Nachtlicht der Zollstation (gleiche Maße, nur leuchtende Teile) *(optional)* | ok |
 
 ## Mond 2.0
 
